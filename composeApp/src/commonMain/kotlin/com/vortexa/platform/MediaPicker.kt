@@ -1,0 +1,17 @@
+package com.vortexa.platform
+
+data class PickedMedia(
+    val uri: String,
+    val type: MediaType,
+)
+
+enum class MediaType {
+    Image,
+    Video,
+}
+
+object MediaPicker {
+    suspend fun pickImages(maxCount: Int): List<PickedMedia> = platformPickImages(maxCount)
+}
+
+internal expect suspend fun platformPickImages(maxCount: Int): List<PickedMedia>
