@@ -1,6 +1,5 @@
 package com.vortexa.ui.page.post.detail
 
-import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -63,6 +62,7 @@ private const val MAX_COMMENT_COMPOSER_IMAGES = 9
  * @param editPayload 编辑态入参，存在时优先展示本地编辑内容
  * @param replyComposerHint 非 null 时详情加载成功后自动展开评论框并弹起键盘（预置回复对象）
  * @param openReplyComposerOnLoad 为 true 时（且无私信回复 hint）详情加载成功后展开底部回复区并弹起键盘，用于列表「评论」入口
+ * @param onBack 顶部返回与删除成功后的返回回调
  */
 @Composable
 fun PostDetailView(
@@ -70,6 +70,7 @@ fun PostDetailView(
     editPayload: PostDetailEditPayload? = null,
     replyComposerHint: PostDetailReplyComposerHint? = null,
     openReplyComposerOnLoad: Boolean = false,
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: PostDetailViewModel = vortexaViewModel { PostDetailViewModel() }
 ) {
@@ -172,7 +173,7 @@ fun PostDetailView(
         viewModel.deletePostUi.collect { ev ->
             ToastUtil.show(context, ev.message)
             if (ev.success) {
-                (context as? Activity)?.finish()
+                onBack()
             }
         }
     }
@@ -248,7 +249,7 @@ fun PostDetailView(
             followLoading = followLoading,
             unfollowLoading = unfollowLoading,
             isMyPost = isMyPost,
-            onBackClick = { (context as? Activity)?.finish() },
+            onBackClick = onBack,
             onFollowClick = { viewModel.follow(displayDetailData?.post?.userId ?: 0L) },
             onUnfollowConfirm = { viewModel.unfollow(displayDetailData?.post?.userId ?: 0L) },
             onBookmarkClick = { viewModel.toggleBookmark() },

@@ -1,6 +1,12 @@
 package com.vortexa.navigation
 
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+private val routeJson = Json { ignoreUnknownKeys = true }
+private val stringListSerializer = ListSerializer(String.serializer())
 
 @Serializable
 sealed interface AppRoute {
@@ -36,15 +42,21 @@ sealed interface AppRoute {
         val editPostId: String? = null,
         val title: String = "",
         val content: String = "",
-        val imageResources: List<String> = emptyList(),
-        val videoResources: List<String> = emptyList(),
-    ) : AppRoute
+        val imageResourcesJson: String = "",
+        val videoResourcesJson: String = "",
+    ) : AppRoute {
+        fun imageResources(): List<String> = decodeRouteStringList(imageResourcesJson)
+
+        fun videoResources(): List<String> = decodeRouteStringList(videoResourcesJson)
+    }
 
     @Serializable
     data class ImagePreview(
-        val urls: List<String> = emptyList(),
+        val urlsJson: String = "",
         val initialIndex: Int = 0,
-    ) : AppRoute
+    ) : AppRoute {
+        fun urls(): List<String> = decodeRouteStringList(urlsJson)
+    }
 
     @Serializable
     data class ProfileSubPage(val kind: ProfileSubPageKind) : AppRoute
@@ -56,3 +68,9 @@ enum class ProfileSubPageKind {
     History,
     Interaction,
 }
+
+internal fun encodeRouteStringList(value: List<String>): String =
+    routeJson.encodeToString(stringListSerializer, value)
+
+internal fun decodeRouteStringList(value: String): List<String> =
+    runCatching { routeJson.decodeFromString(stringListSerializer, value) }.getOrDefault(emptyList())

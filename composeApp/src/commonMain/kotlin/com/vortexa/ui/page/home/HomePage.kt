@@ -36,14 +36,20 @@ import com.vortexa.ui.theme.BaseTheme
  *  @createTime 2026/1/19
  */
 @Composable
-fun HomePage() {
+fun HomePage(initialTab: Int = 0) {
     Log.d("HomePage", "compose start")
     val context = Context()
+    val safeInitialTab = initialTab.coerceIn(0, 4)
     val viewModel = vortexaViewModel { HomeViewModel() }
     val messageViewModel = vortexaViewModel { MessageViewModel() }
     val rememberTabIndex by remember { viewModel.currentTab }
     val hasMessageUnread by messageViewModel.hasUnreadDialogs.collectAsState()
-    val pageState = rememberPagerState(initialPage = rememberTabIndex, pageCount = { 5 })
+    val pageState = rememberPagerState(initialPage = safeInitialTab, pageCount = { 5 })
+    LaunchedEffect(safeInitialTab) {
+        if (rememberTabIndex != safeInitialTab) {
+            viewModel.onTabClick(safeInitialTab)
+        }
+    }
     LaunchedEffect(rememberTabIndex) {
         Log.d("HomePage", "LaunchedEffect rememberTabIndex=$rememberTabIndex currentPage=${pageState.currentPage}")
         if (pageState.currentPage != rememberTabIndex) {

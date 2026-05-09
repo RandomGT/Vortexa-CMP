@@ -8,6 +8,7 @@ import com.vortexa.model.Post
 import com.vortexa.model.RecommendCard
 import com.vortexa.repository.HomeRepository
 import com.vortexa.repository.UserRepository
+import com.vortexa.ui.page.home.HomePostCreateSyncCenter
 import com.vortexa.ui.page.home.pager.profile.ProfileSyncCenter
 import com.vortexa.ui.component.pageStatus.PageStatus
 import com.vortexa.ui.page.post.detail.PostDetailSyncCenter
@@ -47,6 +48,7 @@ class RecommendViewModel : ViewModel() {
     init {
         observePostDetailSync()
         observeProfileSync()
+        observePostCreateSync()
         refresh(showRefreshing = false)
     }
 
@@ -71,6 +73,15 @@ class RecommendViewModel : ViewModel() {
         viewModelScope.launch {
             ProfileSyncCenter.events.collect {
                 Log.d("RecommendViewModel", "observeProfileSync: refresh")
+                refresh(showRefreshing = false)
+            }
+        }
+    }
+
+    private fun observePostCreateSync() {
+        viewModelScope.launch {
+            HomePostCreateSyncCenter.events.collect {
+                Log.d("RecommendViewModel", "observePostCreateSync: refresh")
                 refresh(showRefreshing = false)
             }
         }

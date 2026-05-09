@@ -1,12 +1,13 @@
 package com.vortexa.navigation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.ui.NavDisplay
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.vortexa.ui.page.home.HomePostCreateSyncCenter
 import com.vortexa.ui.page.home.HomePage
 import com.vortexa.ui.page.login.LoginScreen
 import com.vortexa.ui.page.login.forget.ForgetView
@@ -23,23 +24,22 @@ import com.vortexa.ui.shell.ImagePreviewShell
 
 @Composable
 fun VortexaRoot() {
-    val backStack = remember { mutableStateListOf<AppRoute>(AppRoute.Splash) }
+    val navController = rememberNavController()
 
-    val dispatcher = remember {
+    val dispatcher = remember(navController) {
         object : NavigationDispatcher {
             override fun navigate(route: AppRoute) {
-                backStack.add(route)
+                navController.navigate(route.toNavRoute())
             }
 
             override fun back() {
-                if (backStack.size > 1) {
-                    backStack.removeAt(backStack.lastIndex)
-                }
+                navController.popBackStack()
             }
 
+            override fun canGoBack(): Boolean = navController.previousBackStackEntry != null
+
             override fun replaceRoot(route: AppRoute) {
-                backStack.clear()
-                backStack.add(route)
+                navController.replaceRoot(route)
             }
         }
     }
@@ -49,64 +49,130 @@ fun VortexaRoot() {
         onDispose { NavigationRouteBridge.unregister(dispatcher) }
     }
 
-    NavDisplay(
-        backStack = backStack,
-        onBack = dispatcher::back,
-        entryProvider = entryProvider {
-            entry<AppRoute.Splash> {
-                Log.d("VortexaRoot", "enter Splash")
-                SplashPage(onSplashFinish = {
-                    Log.d("VortexaRoot", "Splash finished -> Login")
-                    dispatcher.replaceRoot(AppRoute.Login)
-                })
-            }
-            entry<AppRoute.Home> { route ->
-                Log.d("VortexaRoot", "enter Home route=$route")
-                HomePage()
-            }
-            entry<AppRoute.Login> {
-                LoginScreen(
-                    onRegisterClick = { dispatcher.navigate(AppRoute.Register) },
-                    onForgetClick = { dispatcher.navigate(AppRoute.ForgetPassword) },
-                    onLoginSuccess = { dispatcher.replaceRoot(AppRoute.Home()) },
-                )
-            }
-            entry<AppRoute.Register> {
-                RegisterPage(onRegisterSuccess = { dispatcher.replaceRoot(AppRoute.Home()) })
-            }
-            entry<AppRoute.ForgetPassword> {
-                ForgetView(
-                    onResetSuccess = { dispatcher.replaceRoot(AppRoute.Login) },
-                    onLoginClick = { dispatcher.replaceRoot(AppRoute.Login) },
-                )
-            }
-            entry<AppRoute.Search> { SearchView(onBack = dispatcher::back) }
-            entry<AppRoute.SearchResult> { route ->
-                SearchResultView(keyword = route.keyword)
-            }
-            entry<AppRoute.PostDetail> { route ->
-                PostDetailView(
-                    postId = route.postId,
-                    openReplyComposerOnLoad = route.openReplyComposer,
-                )
-            }
-            entry<AppRoute.PostCreate> { route ->
-                PostCreateView()
-            }
-            entry<AppRoute.ImagePreview> { route ->
-                ImagePreviewShell(
-                    urls = route.urls,
-                    initialIndex = route.initialIndex,
-                    onBack = dispatcher::back,
-                )
-            }
-            entry<AppRoute.ProfileSubPage> { route ->
-                when (route.kind) {
-                    ProfileSubPageKind.Collection -> CollectionView(onBackClick = dispatcher::back)
-                    ProfileSubPageKind.History -> HistoryView(onBackClick = dispatcher::back)
-                    ProfileSubPageKind.Interaction -> InteractionView(onBackClick = dispatcher::back)
+    NavHost(
+        navController = navController,
+        startDestination = NavRoutes.Splash,
+    ) {
+        composable(NavRoutes.Splash) {
+            SplashPage(onSplashFinish = {
+                dispatcher.replaceRoot(AppRoute.Login)
+            })
+        }
+        composable(NavRoutes.Home) {
+            val tab = NavigationPayloadStore.homeTab
+            HomePage(initialTab = tab)
+        }
+        composable(NavRoutes.Login) {
+            LoginScreen(
+                onRegisterClick = { dispatcher.navigate(AppRoute.Register) },
+                onForgetClick = { dispatcher.navigate(AppRoute.ForgetPassword) },
+                onLoginSuccess = { dispatcher.replaceRoot(AppRoute.Home()) },
+            )
+        }
+        composable(NavRoutes.Register) {
+            RegisterPage(onRegisterSuccess = { dispatcher.replaceRoot(AppRoute.Home()) })
+        }
+        composable(NavRoutes.ForgetPassword) {
+            ForgetView(
+                onResetSuccess = { dispatcher.replaceRoot(AppRoute.Login) },
+                onLoginClick = { dispatcher.replaceRoot(AppRoute.Login) },
+            )
+        }
+        composable(NavRoutes.Search) { SearchView(onBack = dispatcher::back) }
+        composable(NavRoutes.SearchResult) {
+            SearchResultView(keyword = NavigationPayloadStore.searchKeyword)
+        }
+        composable(NavRoutes.PostDetail) {
+            PostDetailView(
+                postId = NavigationPayloadStore.postId,
+                openReplyComposerOnLoad = NavigationPayloadStore.openReplyComposer,
+                onBack = dispatcher::back,
+            )
+        }
+        composable(NavRoutes.PostCreate) {
+            PostCreateView(
+                onPublishSuccess = {
+                    HomePostCreateSyncCenter.notifyPostCreated()
+                    dispatcher.back()
                 }
+            )
+        }
+        composable(NavRoutes.ImagePreview) {
+            ImagePreviewShell(
+                urls = NavigationPayloadStore.imagePreviewUrls,
+                initialIndex = NavigationPayloadStore.imagePreviewInitialIndex,
+                onBack = dispatcher::back,
+            )
+        }
+        composable(NavRoutes.ProfileSubPage) {
+            val kind = NavigationPayloadStore.profileSubPageKind
+            when (kind) {
+                ProfileSubPageKind.Collection -> CollectionView(onBackClick = dispatcher::back)
+                ProfileSubPageKind.History -> HistoryView(onBackClick = dispatcher::back)
+                ProfileSubPageKind.Interaction -> InteractionView(onBackClick = dispatcher::back)
             }
-        },
-    )
+        }
+    }
+}
+
+private fun NavController.replaceRoot(route: AppRoute) {
+    navigate(route.toNavRoute()) {
+        popUpTo(graph.id) { inclusive = true }
+        launchSingleTop = true
+    }
+}
+
+private object NavRoutes {
+    const val Splash = "splash"
+    const val Home = "home"
+    const val Login = "login"
+    const val Register = "register"
+    const val ForgetPassword = "forgetPassword"
+    const val Search = "search"
+    const val SearchResult = "searchResult"
+    const val PostDetail = "postDetail"
+    const val PostCreate = "postCreate"
+    const val ImagePreview = "imagePreview"
+    const val ProfileSubPage = "profileSubPage"
+}
+
+private object NavigationPayloadStore {
+    var homeTab: Int = 0
+    var searchKeyword: String = ""
+    var postId: String = ""
+    var openReplyComposer: Boolean = false
+    var imagePreviewUrls: List<String> = emptyList()
+    var imagePreviewInitialIndex: Int = 0
+    var profileSubPageKind: ProfileSubPageKind = ProfileSubPageKind.Collection
+}
+
+private fun AppRoute.toNavRoute(): String = when (this) {
+    AppRoute.Splash -> NavRoutes.Splash
+    is AppRoute.Home -> {
+        NavigationPayloadStore.homeTab = tab
+        NavRoutes.Home
+    }
+    AppRoute.Login -> NavRoutes.Login
+    AppRoute.Register -> NavRoutes.Register
+    AppRoute.ForgetPassword -> NavRoutes.ForgetPassword
+    AppRoute.Search -> NavRoutes.Search
+    is AppRoute.SearchResult -> {
+        NavigationPayloadStore.searchKeyword = keyword
+        NavRoutes.SearchResult
+    }
+    is AppRoute.PostDetail -> {
+        NavigationPayloadStore.postId = postId
+        NavigationPayloadStore.openReplyComposer = openReplyComposer
+        NavRoutes.PostDetail
+    }
+    is AppRoute.PostCreate -> NavRoutes.PostCreate
+    is AppRoute.ImagePreview -> {
+        NavigationPayloadStore.imagePreviewUrls = urls()
+        NavigationPayloadStore.imagePreviewInitialIndex = initialIndex
+        NavRoutes.ImagePreview
+    }
+    is AppRoute.ProfileSubPage -> {
+        NavigationPayloadStore.profileSubPageKind = kind
+        NavRoutes.ProfileSubPage
+    }
 }

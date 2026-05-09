@@ -10,6 +10,7 @@ import com.vortexa.model.TeacherItem
 import com.vortexa.repository.HomeRepository
 import com.vortexa.repository.UserRepository
 import com.vortexa.ui.component.pageStatus.PageStatus
+import com.vortexa.ui.page.home.HomePostCreateSyncCenter
 import com.vortexa.ui.page.home.pager.profile.ProfileSyncCenter
 import com.vortexa.ui.page.post.detail.PostDetailSyncCenter
 import com.vortexa.ui.page.post.detail.applyPostDetailSync
@@ -77,6 +78,7 @@ class CommunicateViewModel : ViewModel() {
     init {
         observePostDetailSync()
         observeProfileSync()
+        observePostCreateSync()
         loadPosts(_selectedPostType.value)
     }
 
@@ -101,6 +103,15 @@ class CommunicateViewModel : ViewModel() {
         viewModelScope.launch {
             ProfileSyncCenter.events.collect {
                 Log.d(TAG, "observeProfileSync: refresh")
+                refresh(showRefreshing = false)
+            }
+        }
+    }
+
+    private fun observePostCreateSync() {
+        viewModelScope.launch {
+            HomePostCreateSyncCenter.events.collect {
+                Log.d(TAG, "observePostCreateSync: refresh")
                 refresh(showRefreshing = false)
             }
         }

@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vortexa.navigation.AppRoute
 import com.vortexa.navigation.ProfileSubPageKind
+import com.vortexa.navigation.encodeRouteStringList
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import vortexa.composeapp.generated.resources.Res
@@ -161,7 +162,7 @@ fun PostDetailShell(
         )
         Text("postId = $postId")
         Text("openReplyComposer = $openReplyComposer")
-        Button(onClick = { onNavigate(AppRoute.ImagePreview(listOf("sample"), 0)) }) {
+        Button(onClick = { onNavigate(AppRoute.ImagePreview(encodeRouteStringList(listOf("sample")), 0)) }) {
             Text("图片预览")
         }
     }

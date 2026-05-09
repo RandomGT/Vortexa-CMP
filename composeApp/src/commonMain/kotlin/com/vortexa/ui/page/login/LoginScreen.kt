@@ -25,8 +25,8 @@ import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.unit.dp
 import com.vortexa.ui.theme.BaseTheme
 import com.vortexa.ui.theme.Colors
-import com.vortexa.ui.theme.FontMedium
 import com.vortexa.ui.theme.FontRegular
+import com.vortexa.ui.component.LoadingButton
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import com.vortexa.util.extension.click
 import vortexa.composeapp.generated.resources.Res
@@ -113,7 +113,7 @@ fun LoginScreen(
                     )
 
                     // Login Button
-                    Box(
+                    LoadingButton(
                         modifier = Modifier
                             .padding(horizontal = 37.dp) // 390 width - 315 input width = 75 / 2 = 37.5. 
                             // Actually input width in Figma is 315. Screen width 390. (390-315)/2 = 37.5.
@@ -123,20 +123,16 @@ fun LoginScreen(
                             .fillMaxWidth()
                             .height(50.dp)
                             .clip(RoundedCornerShape(30.dp))
-                            .background(Colors.black_101828)
-                            .click {
-                                val context = Context()
-                                val inline = (context as? LoginActivity)?.intent
-                                    ?.getBooleanExtra(LoginActivity.EXTRA_INLINE_AUTH, false) == true
-                                viewModel.login(context, inline, onLoginSuccess)
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "登录",
-                            style = FontMedium(16, Color.White)
-                        )
-                    }
+                            .background(Colors.black_101828),
+                        text = "登录",
+                        isLoading = state.isLoading,
+                        onClick = {
+                            val context = Context()
+                            val inline = (context as? LoginActivity)?.intent
+                                ?.getBooleanExtra(LoginActivity.EXTRA_INLINE_AUTH, false) == true
+                            viewModel.login(context, inline, onLoginSuccess)
+                        }
+                    )
 
                     // Register Link
                     Row(

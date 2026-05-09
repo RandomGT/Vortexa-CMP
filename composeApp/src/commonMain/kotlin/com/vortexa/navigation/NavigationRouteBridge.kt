@@ -48,6 +48,8 @@ object NavigationRouteBridge {
         return true
     }
 
+    fun canGoBack(): Boolean = dispatcher?.canGoBack() ?: false
+
     fun replaceRoot(route: AppRoute): Boolean {
         val activeDispatcher = dispatcher
         if (activeDispatcher == null) {
@@ -88,5 +90,6 @@ object NavigationRouteBridge {
 interface NavigationDispatcher {
     fun navigate(route: AppRoute)
     fun back()
+    fun canGoBack(): Boolean
     fun replaceRoot(route: AppRoute)
 }

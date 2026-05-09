@@ -1,10 +1,9 @@
 package com.vortexa.ui.page.home.pager.home
 
 import android.content.Context
-import android.content.Intent
 import com.vortexa.model.Post
-import com.vortexa.router.AppSchemeContract
-import com.vortexa.ui.page.home.HomeActivity
+import com.vortexa.navigation.AppRoute
+import com.vortexa.navigation.NavigationRouteBridge
 import com.vortexa.ui.page.home.pager.home.communicate.moduleLabelToCommunicatePostType
 
 /**
@@ -30,11 +29,7 @@ object HomeCommunicateNavigation {
         val postType = moduleLabelToCommunicatePostType(moduleLabelRaw)
         pendingSwitchToCommunicateTab = true
         pendingPostType = postType
-        val i = Intent(context, HomeActivity::class).apply {
-            putExtra(AppSchemeContract.EXTRA_HOME_TAB, 0)
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        }
-        context.startActivity(i)
+        NavigationRouteBridge.replaceRoot(AppRoute.Home(tab = 0))
     }
 
     /**

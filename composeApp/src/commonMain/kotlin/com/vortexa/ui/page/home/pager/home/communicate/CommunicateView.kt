@@ -1,11 +1,6 @@
 package com.vortexa.ui.page.home.pager.home.communicate
 
-import android.content.Context
-import android.app.Activity
-import android.content.Intent
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -30,7 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.vortexa.ui.page.post.create.PostCreateActivity
+import com.vortexa.navigation.AppRoute
+import com.vortexa.navigation.NavigationRouteBridge
 import com.vortexa.ui.page.home.pager.home.HomeCommunicateNavigation
 import com.vortexa.ui.page.home.pager.home.recommend.PostItem
 import com.vortexa.ui.theme.Colors
@@ -49,7 +45,6 @@ fun CommunicateView(
     isActiveTab: Boolean = true,
     viewModel: CommunicateViewModel = vortexaViewModel { CommunicateViewModel() }
 ) {
-    val context = Context()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(isActiveTab) {
@@ -73,14 +68,6 @@ fun CommunicateView(
         }
     }
 
-    val createPostLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            Log.i(TAG, "post create finished with OK, refresh communicate list (silent)")
-            viewModel.refresh(showRefreshing = false)
-        }
-    }
     val selectedPostType by viewModel.selectedPostType.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     Box {
@@ -110,7 +97,7 @@ fun CommunicateView(
                 .background(Colors.black_101828, CircleShape)
                 .align(Alignment.BottomEnd)
                 .click {
-                    createPostLauncher.launch(Intent(context, PostCreateActivity::class))
+                    NavigationRouteBridge.navigate(AppRoute.PostCreate())
                 }
         ) {
             Image(

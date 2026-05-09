@@ -108,7 +108,9 @@ class LoginViewModel(
                 }
                 .onFailure { e ->
                     Log.e("Login", "login: fail!!! :$e")
-                    _uiState.update { it.copy(isLoading = false, error = e.message) }
+                    val message = e.message?.takeIf { it.isNotBlank() } ?: "登录失败，请稍后重试"
+                    _uiState.update { it.copy(isLoading = false, error = message) }
+                    ToastUtil.show(message)
                 }
         }
     }

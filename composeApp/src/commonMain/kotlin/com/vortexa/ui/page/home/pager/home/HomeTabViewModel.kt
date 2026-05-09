@@ -1,12 +1,12 @@
 package com.vortexa.ui.page.home.pager.home
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.vortexa.ui.page.search.SearchActivity
+import com.vortexa.navigation.AppRoute
+import com.vortexa.navigation.NavigationRouteBridge
 
 class HomeTabViewModel : ViewModel() {
     var currentTab by mutableStateOf(0)
@@ -17,7 +17,6 @@ class HomeTabViewModel : ViewModel() {
     }
 
     fun jumpToSearch(context: Context) {
-        val intent = Intent(context, SearchActivity::class)
-        context.startActivity(intent)
+        NavigationRouteBridge.navigate(AppRoute.Search)
     }
 }
