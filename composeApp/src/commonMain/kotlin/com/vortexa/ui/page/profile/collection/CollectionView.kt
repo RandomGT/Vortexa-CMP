@@ -30,6 +30,7 @@ import com.vortexa.ui.component.pageStatus.PageStatusView
 import com.vortexa.ui.page.home.pager.home.HomeCommunicateNavigation
 import com.vortexa.ui.page.home.pager.home.recommend.PostItem
 import com.vortexa.ui.page.post.detail.PostDetailActivity
+import com.vortexa.ui.theme.belowStatusBar
 import kotlinx.coroutines.flow.collect
 
 /**
@@ -77,6 +78,7 @@ fun CollectionView(
         modifier = modifier
             .fillMaxSize()
             .background(Color.White)
+            .belowStatusBar()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             CollectionHeader(onBackClick = onBackClick)

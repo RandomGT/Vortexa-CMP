@@ -47,6 +47,7 @@ import com.vortexa.ui.page.profile.other.OtherUserProfileActivity
 import com.vortexa.ui.page.home.pager.home.recommend.PostImagesGrid
 import com.vortexa.ui.page.post.detail.reply.CommentListView
 import com.vortexa.ui.page.post.detail.reply.ReplyIndicatorBar
+import com.vortexa.ui.theme.belowStatusBar
 import com.vortexa.util.ImagePickValidator
 import com.vortexa.util.ToastUtil
 import java.io.File
@@ -231,8 +232,9 @@ fun PostDetailView(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .imePadding()
             .background(Color.White)
+            .belowStatusBar()
+            .imePadding()
     ) {
         // TitleBar：成功时有 data，失败时用占位避免 NPE；发帖人为自己时隐藏关注按钮
         val displayDetailData = mergeWithEditPayload(detailData, postId, editPayload)

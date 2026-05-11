@@ -32,6 +32,7 @@ import com.vortexa.ui.page.home.pager.home.recommend.PostItem
 import kotlinx.coroutines.flow.collect
 import com.vortexa.ui.page.post.detail.PostDetailActivity
 import com.vortexa.ui.page.profile.collection.CollectionFilter
+import com.vortexa.ui.theme.belowStatusBar
 
 /**
  * 浏览记录页：头部 + Filter + Post 列表。
@@ -77,6 +78,7 @@ fun HistoryView(
         modifier = modifier
             .fillMaxSize()
             .background(Color.White)
+            .belowStatusBar()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             HistoryHeader(onBackClick = onBackClick)

@@ -37,6 +37,7 @@ import com.vortexa.ui.component.ListEndFooter
 import com.vortexa.ui.component.pageStatus.PageStatus
 import com.vortexa.ui.component.pageStatus.PageStatusView
 import com.vortexa.ui.page.post.detail.PostDetailActivity
+import com.vortexa.ui.theme.belowStatusBar
 
 /**
  * 互动管理页：头部 + 筛选（所有人/我的关注）+ TabBar（回复/点赞）+ 互动类型浮层 + 列表。
@@ -88,6 +89,7 @@ fun InteractionView(
         modifier = modifier
             .fillMaxSize()
             .background(Color.White)
+            .belowStatusBar()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             InteractionHeader(

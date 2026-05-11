@@ -30,6 +30,7 @@ import com.vortexa.ui.page.home.pager.home.recommend.PostItem
 import com.vortexa.ui.page.post.detail.PostDetailActivity
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontMedium
+import com.vortexa.ui.theme.belowStatusBar
 import vortexa.composeapp.generated.resources.Res
 import vortexa.composeapp.generated.resources.icon_back
 
@@ -45,7 +46,12 @@ fun HotPostListView(
     val context = Context()
     val dividerColor = Color(0xFFF3F4F5)
 
-    Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .belowStatusBar()
+    ) {
         // 标题栏：返回 + 热帖
         Row(
             modifier = Modifier
