@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.vortexa.ui.page.home.HomePostCreateSyncCenter
 import com.vortexa.ui.page.home.HomePage
@@ -25,6 +26,7 @@ import com.vortexa.ui.shell.ImagePreviewShell
 @Composable
 fun VortexaRoot() {
     val navController = rememberNavController()
+    val currentBackStackEntry = navController.currentBackStackEntryAsState()
 
     val dispatcher = remember(navController) {
         object : NavigationDispatcher {
@@ -49,67 +51,71 @@ fun VortexaRoot() {
         onDispose { NavigationRouteBridge.unregister(dispatcher) }
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = NavRoutes.Splash,
+    WideBackGestureLayer(
+        enabled = currentBackStackEntry.value != null && navController.previousBackStackEntry != null,
     ) {
-        composable(NavRoutes.Splash) {
-            SplashPage(onSplashFinish = {
-                dispatcher.replaceRoot(AppRoute.Login)
-            })
-        }
-        composable(NavRoutes.Home) {
-            val tab = NavigationPayloadStore.homeTab
-            HomePage(initialTab = tab)
-        }
-        composable(NavRoutes.Login) {
-            LoginScreen(
-                onRegisterClick = { dispatcher.navigate(AppRoute.Register) },
-                onForgetClick = { dispatcher.navigate(AppRoute.ForgetPassword) },
-                onLoginSuccess = { dispatcher.replaceRoot(AppRoute.Home()) },
-            )
-        }
-        composable(NavRoutes.Register) {
-            RegisterPage(onRegisterSuccess = { dispatcher.replaceRoot(AppRoute.Home()) })
-        }
-        composable(NavRoutes.ForgetPassword) {
-            ForgetView(
-                onResetSuccess = { dispatcher.replaceRoot(AppRoute.Login) },
-                onLoginClick = { dispatcher.replaceRoot(AppRoute.Login) },
-            )
-        }
-        composable(NavRoutes.Search) { SearchView(onBack = dispatcher::back) }
-        composable(NavRoutes.SearchResult) {
-            SearchResultView(keyword = NavigationPayloadStore.searchKeyword)
-        }
-        composable(NavRoutes.PostDetail) {
-            PostDetailView(
-                postId = NavigationPayloadStore.postId,
-                openReplyComposerOnLoad = NavigationPayloadStore.openReplyComposer,
-                onBack = dispatcher::back,
-            )
-        }
-        composable(NavRoutes.PostCreate) {
-            PostCreateView(
-                onPublishSuccess = {
-                    HomePostCreateSyncCenter.notifyPostCreated()
-                    dispatcher.back()
+        NavHost(
+            navController = navController,
+            startDestination = NavRoutes.Splash,
+        ) {
+            composable(NavRoutes.Splash) {
+                SplashPage(onSplashFinish = {
+                    dispatcher.replaceRoot(AppRoute.Login)
+                })
+            }
+            composable(NavRoutes.Home) {
+                val tab = NavigationPayloadStore.homeTab
+                HomePage(initialTab = tab)
+            }
+            composable(NavRoutes.Login) {
+                LoginScreen(
+                    onRegisterClick = { dispatcher.navigate(AppRoute.Register) },
+                    onForgetClick = { dispatcher.navigate(AppRoute.ForgetPassword) },
+                    onLoginSuccess = { dispatcher.replaceRoot(AppRoute.Home()) },
+                )
+            }
+            composable(NavRoutes.Register) {
+                RegisterPage(onRegisterSuccess = { dispatcher.replaceRoot(AppRoute.Home()) })
+            }
+            composable(NavRoutes.ForgetPassword) {
+                ForgetView(
+                    onResetSuccess = { dispatcher.replaceRoot(AppRoute.Login) },
+                    onLoginClick = { dispatcher.replaceRoot(AppRoute.Login) },
+                )
+            }
+            composable(NavRoutes.Search) { SearchView(onBack = dispatcher::back) }
+            composable(NavRoutes.SearchResult) {
+                SearchResultView(keyword = NavigationPayloadStore.searchKeyword)
+            }
+            composable(NavRoutes.PostDetail) {
+                PostDetailView(
+                    postId = NavigationPayloadStore.postId,
+                    openReplyComposerOnLoad = NavigationPayloadStore.openReplyComposer,
+                    onBack = dispatcher::back,
+                )
+            }
+            composable(NavRoutes.PostCreate) {
+                PostCreateView(
+                    onPublishSuccess = {
+                        HomePostCreateSyncCenter.notifyPostCreated()
+                        dispatcher.back()
+                    }
+                )
+            }
+            composable(NavRoutes.ImagePreview) {
+                ImagePreviewShell(
+                    urls = NavigationPayloadStore.imagePreviewUrls,
+                    initialIndex = NavigationPayloadStore.imagePreviewInitialIndex,
+                    onBack = dispatcher::back,
+                )
+            }
+            composable(NavRoutes.ProfileSubPage) {
+                val kind = NavigationPayloadStore.profileSubPageKind
+                when (kind) {
+                    ProfileSubPageKind.Collection -> CollectionView(onBackClick = dispatcher::back)
+                    ProfileSubPageKind.History -> HistoryView(onBackClick = dispatcher::back)
+                    ProfileSubPageKind.Interaction -> InteractionView(onBackClick = dispatcher::back)
                 }
-            )
-        }
-        composable(NavRoutes.ImagePreview) {
-            ImagePreviewShell(
-                urls = NavigationPayloadStore.imagePreviewUrls,
-                initialIndex = NavigationPayloadStore.imagePreviewInitialIndex,
-                onBack = dispatcher::back,
-            )
-        }
-        composable(NavRoutes.ProfileSubPage) {
-            val kind = NavigationPayloadStore.profileSubPageKind
-            when (kind) {
-                ProfileSubPageKind.Collection -> CollectionView(onBackClick = dispatcher::back)
-                ProfileSubPageKind.History -> HistoryView(onBackClick = dispatcher::back)
-                ProfileSubPageKind.Interaction -> InteractionView(onBackClick = dispatcher::back)
             }
         }
     }

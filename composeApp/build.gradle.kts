@@ -37,8 +37,10 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.multiplatform.settings.noArg)
         }
         iosMain.dependencies {
+            implementation(libs.navigationevent)
             implementation(libs.ktor.client.darwin)
         }
         commonTest.dependencies {
