@@ -2,6 +2,9 @@ package com.vortexa.ui.page.post.create
 
 import android.app.Activity
 import android.content.Intent
+import com.vortexa.navigation.AppRoute
+import com.vortexa.navigation.NavigationRouteBridge
+import com.vortexa.navigation.encodeRouteStringList
 
 class PostCreateActivity : Activity() {
     companion object {
@@ -13,7 +16,9 @@ class PostCreateActivity : Activity() {
         const val EXTRA_EDIT_MODULE: String = "edit_module"
         const val EXTRA_EDIT_MEDIA: String = "edit_media"
 
-        fun parseEditArgs(intent: Intent): PostCreateEditArgs? = null
+        private var pendingEditArgs: PostCreateEditArgs? = null
+
+        fun parseEditArgs(intent: Intent): PostCreateEditArgs? = pendingEditArgs
 
         fun startForEdit(
             context: Any?,
@@ -24,6 +29,25 @@ class PostCreateActivity : Activity() {
             imageResources: List<String> = emptyList(),
             videoResources: List<String> = emptyList(),
         ) {
+            val args = PostCreateEditArgs(
+                postId = postId,
+                title = title.orEmpty(),
+                content = content.orEmpty(),
+                board = board?.takeIf { it.isNotBlank() },
+                imageResources = imageResources,
+                videoResources = videoResources
+            )
+            pendingEditArgs = args
+            NavigationRouteBridge.navigate(
+                AppRoute.PostCreate(
+                    editPostId = args.postId,
+                    title = args.title,
+                    content = args.content,
+                    board = args.board.orEmpty(),
+                    imageResourcesJson = encodeRouteStringList(args.imageResources),
+                    videoResourcesJson = encodeRouteStringList(args.videoResources)
+                )
+            )
         }
     }
 }

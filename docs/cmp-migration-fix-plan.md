@@ -109,6 +109,7 @@ If a command is unavailable for the current local setup, record the exact failur
 - Reuse: `AuthModels`, `AccountRepository`, password/phone validators, `AuthNavGate`
 - Replace Android-only: Activity shell, Toast, Android back/finish calls
 - Acceptance: Splash routes to auth/home according to session; login/register/forget preserve Android UI and validation.
+- 2026-05-11 P1 AgentTeam result: Splash now routes by persisted `TokenConfig`; token and user basics persist on iOS via `NSUserDefaults`; `AuthNavGate.reset()` no longer bounces successful auth back to Login.
 
 ### P1-02 Home Shell and Tabs
 
@@ -117,6 +118,7 @@ If a command is unavailable for the current local setup, record the exact failur
 - Reuse: `HomeRepository`, `RecommendCard`, `DynamicPostsModels`, `SchoolCourseCard`, `TeacherListModels`, existing resources
 - Replace Android-only: Activity shell, local context navigation, Android log
 - Acceptance: Home tab structure, guest login prompt, recommend/follow/message/profile/school tab visuals match Android.
+- 2026-05-11 P1 AgentTeam result: Home tab structure and guest gating preserved; Follow tab now matches Android user-filter behavior with selected border and `followingId`; unmigrated message/profile downstream entries are safely handled without crashes.
 
 ### P1-03 Search
 
@@ -125,6 +127,8 @@ If a command is unavailable for the current local setup, record the exact failur
 - Reuse: `SearchModels`, `SearchRepository`, `SearchHistoryRepository` common replacement
 - Replace Android-only: SharedPreferences search history, Activity navigation
 - Acceptance: search input, history, hot topics, tutor recommendation, result tabs, and post/composite lists are routeable and compile.
+- 2026-05-11 P0 AgentTeam result: `SearchRepository.getSearchResult` no longer returns a fixed empty list. CMP now calls `POST /v/api/search/result` with `keyword/type` in body and `pageNum/pageSize` in query, then maps post-type results into the existing `Post` model. Remaining follow-up: mixed non-post result types still need Android-parity display and navigation validation.
+- 2026-05-11 P1 AgentTeam result: search history persists through `SpHelper`/multiplatform settings; result tabs are enabled; composite/post tabs share the same post list state; non-post tabs currently show stable empty states pending dedicated pages.
 
 ### P1-04 Post Detail and Hot List
 
@@ -133,6 +137,7 @@ If a command is unavailable for the current local setup, record the exact failur
 - Reuse: `PostDetailModels`, `Post`, `InteractionRepository`, `HomeRepository`, `ImagePreviewShell`, comment/reply components
 - Replace Android-only: `ImagePreviewActivity.start`, Android media preview `Bitmap/MediaMetadataRetriever/Uri`, `PostDetailActivity.start`
 - Acceptance: post detail, comments, replies, emoji panel, media preview handoff, and hot-post list route without Android classes.
+- 2026-05-11 P1 AgentTeam result: post like/collect/delete, follow/unfollow, comment like/unlike now call real `UserRepository` endpoints; detail `isLiked` is parsed from API; reply-to-comment route hints are preserved; hot-post list has a typed route bridge.
 
 ### P1-05 Post Create
 
@@ -141,6 +146,8 @@ If a command is unavailable for the current local setup, record the exact failur
 - Reuse: `PostCreateModels`, `PostUploadModels`, `PostCreateViewModel`, `MediaPicker`, `ImagePickValidator`
 - Replace Android-only: Activity Result photo picker, Android `Uri`, Android thumbnail loader, Activity result return
 - Acceptance: create/edit route accepts existing arguments; image/video pickers use CMP platform abstraction; selection limits and validation match Android.
+- 2026-05-11 P0 AgentTeam result: create remains on the real insert API; edit now uses `PUT /v/api/user/posts/update/{postId}` and local images upload through `POST /v/api/home/post/image` using a minimal iOS file-reader abstraction. Remaining follow-up: local video upload is still not implemented, and the upload flow needs device/backend URI validation.
+- 2026-05-11 P1 AgentTeam result: edit route payload now carries title/content/module/media for prefill; image picker uses CMP media abstraction and Android validation constants; local video upload fails explicitly instead of being silently dropped, while remote video URLs are preserved.
 
 ### P1-06 Profile Core Subpages
 
@@ -149,6 +156,8 @@ If a command is unavailable for the current local setup, record the exact failur
 - Reuse: `CollectionModels`, `HistoryModels`, `InteractionModels`, `UserRepository`, `InteractionRepository`
 - Replace Android-only: Activity shell, `PostDetailActivity.start`, Toast/Log
 - Acceptance: collection/history/interaction list filters, tabs, and post navigation preserve Android behavior.
+- 2026-05-11 P0 AgentTeam result: collection/history/interaction repositories no longer return fixed empty pages. Collection uses `POST /v/api/user/collections`, history uses `GET /v/api/user/viewHistory`, and interactions use `POST /v/api/user/interactions`; existing UI, filters, tabs, and post mapping were preserved.
+- 2026-05-11 P1 AgentTeam result: collection/history like and collect actions call real `UserRepository` endpoints; collection uncollect removes the item after server success; interaction items with `postId` route into post detail.
 
 ## P2 First-Phase Tasks
 

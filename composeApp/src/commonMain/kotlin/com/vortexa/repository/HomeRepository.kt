@@ -9,7 +9,9 @@ import com.vortexa.model.RecommendCourseItem
 import com.vortexa.model.RecommendCourseResponse
 import com.vortexa.model.RecommendPostResponse
 import com.vortexa.model.RecommendTeacherResponse
+import com.vortexa.model.mediaUrlListToJsonOrNull
 import com.vortexa.net.HomeApi
+import com.vortexa.platform.platformReadUploadFile
 
 class HomeRepository(
     private val api: HomeApi = HomeApi()
@@ -45,7 +47,23 @@ class HomeRepository(
         runCatching { api.createDiscussionPost(title, content, module, mediaList) }
 
     suspend fun updatePost(postId: Long, title: String, content: String, module: String, mediaList: List<String>? = null): Result<Unit> =
-        Result.success(Unit)
+        runCatching {
+            api.updatePost(
+                postId = postId,
+                title = title,
+                content = content,
+                module = module,
+                mediaListJson = mediaList?.let { mediaUrlListToJsonOrNull(it) }
+            )
+        }
 
-    suspend fun uploadPostImage(uri: Any): Result<PostImageUploadData> = Result.success(PostImageUploadData(""))
+    suspend fun uploadPostImage(uri: Any): Result<PostImageUploadData> = runCatching {
+        val file = platformReadUploadFile(uri.toString())
+            ?: throw IllegalArgumentException("无法读取图片文件")
+        api.uploadPostImage(
+            fileName = file.fileName,
+            bytes = file.bytes,
+            contentType = file.contentType
+        )
+    }
 }

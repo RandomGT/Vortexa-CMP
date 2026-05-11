@@ -35,13 +35,21 @@ sealed interface AppRoute {
     data class PostDetail(
         val postId: String,
         val openReplyComposer: Boolean = false,
+        val replyCommentId: Long? = null,
+        val replyAuthorName: String = "",
+        val replyCommentSnippet: String = "",
+        val replyAuthorAvatar: String? = null,
     ) : AppRoute
+
+    @Serializable
+    data object HotPostList : AppRoute
 
     @Serializable
     data class PostCreate(
         val editPostId: String? = null,
         val title: String = "",
         val content: String = "",
+        val board: String = "",
         val imageResourcesJson: String = "",
         val videoResourcesJson: String = "",
     ) : AppRoute {

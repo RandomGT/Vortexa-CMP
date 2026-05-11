@@ -49,5 +49,9 @@ data class SearchResultListItem(
     val likeCount: Int? = null,
     val collectCount: Int? = null,
     val replyCount: Int? = null,
+    val isLiked: Boolean = false,
+    val isCollect: Boolean = false,
+    val isInteractionHot: Boolean = false,
+    val isViewHot: Boolean = false,
     val publishTime: String? = null
 )

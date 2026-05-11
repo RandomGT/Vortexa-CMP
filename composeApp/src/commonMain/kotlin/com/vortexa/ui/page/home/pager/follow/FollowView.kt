@@ -39,7 +39,6 @@ import com.vortexa.ui.component.pageStatus.PageStatusView
 import com.vortexa.ui.page.home.pager.home.HomeCommunicateNavigation
 import com.vortexa.ui.page.home.pager.home.recommend.PostItem
 import com.vortexa.ui.page.post.detail.PostDetailActivity
-import com.vortexa.ui.page.profile.other.OtherUserProfileActivity
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.belowStatusBar
 import com.vortexa.ui.theme.FontMedium
@@ -65,6 +64,7 @@ fun FollowView(
     val pageStatus by viewModel.pageStatus.collectAsState()
     val hasMorePosts by viewModel.hasMorePosts.collectAsState()
     val loadingMorePosts by viewModel.loadingMorePosts.collectAsState()
+    val selectedFollowingUserId by viewModel.selectedFollowingUserId.collectAsState()
     val context = Context()
     val lifecycleOwner = LocalLifecycleOwner.current
     val dividerColor = Color(0xFFF3F4F5)
@@ -144,8 +144,9 @@ fun FollowView(
 
             FollowedUserHorizontal(
                 users = followingList,
+                selectedUserId = selectedFollowingUserId,
                 onUserClick = { user ->
-                    OtherUserProfileActivity.startIfNotSelf(context, user.userId)
+                    viewModel.selectFollowingUser(user.userId)
                 }
             )
 

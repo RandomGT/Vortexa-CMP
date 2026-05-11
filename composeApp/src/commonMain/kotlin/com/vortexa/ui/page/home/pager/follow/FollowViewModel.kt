@@ -36,6 +36,9 @@ class FollowViewModel : ViewModel() {
     private val _postList = MutableStateFlow<List<Post>>(emptyList())
     val postList: StateFlow<List<Post>> = _postList.asStateFlow()
 
+    private val _selectedFollowingUserId = MutableStateFlow<Long?>(null)
+    val selectedFollowingUserId: StateFlow<Long?> = _selectedFollowingUserId.asStateFlow()
+
     /**
      * 访客未点进「关注」Tab 前为 Success，避免首屏 `/v/api/dynamic/` 触发登录拦截。
      */
@@ -140,7 +143,12 @@ class FollowViewModel : ViewModel() {
         return followRepository.getFollowingList(pageNum = 1, pageSize = 20)
             .fold(
                 onSuccess = { response ->
-                    _followingList.value = response.list.map { followRepository.mapToFollowedUser(it) }
+                    val users = response.list.map { followRepository.mapToFollowedUser(it) }
+                    _followingList.value = users
+                    val selectedUserId = _selectedFollowingUserId.value
+                    if (selectedUserId != null && users.none { it.userId == selectedUserId }) {
+                        _selectedFollowingUserId.value = null
+                    }
                     Log.d(TAG, "loadFollowingList: success, size=${_followingList.value.size}")
                     true
                 },
@@ -158,7 +166,12 @@ class FollowViewModel : ViewModel() {
     }
 
     private suspend fun loadPostsFirstPageSuspend(): Boolean {
-        return followRepository.getDynamicPosts(pageNum = 1, pageSize = followPostPageSize)
+        val followingId = _selectedFollowingUserId.value
+        return followRepository.getDynamicPosts(
+            pageNum = 1,
+            pageSize = followPostPageSize,
+            followingId = followingId
+        )
             .fold(
                 onSuccess = { response ->
                     followDynamicPageNum = 1
@@ -196,7 +209,7 @@ class FollowViewModel : ViewModel() {
         viewModelScope.launch {
             _loadingMorePosts.value = true
             try {
-                loadDynamicNextPageSuspend()
+                loadDynamicNextPageSuspend(_selectedFollowingUserId.value)
             } catch (e: Exception) {
                 Log.e(TAG, "loadMorePosts failed", e)
                 _hasMorePosts.value = false
@@ -206,9 +219,13 @@ class FollowViewModel : ViewModel() {
         }
     }
 
-    private suspend fun loadDynamicNextPageSuspend() {
+    private suspend fun loadDynamicNextPageSuspend(followingId: Long?) {
         val nextPage = followDynamicPageNum + 1
-        followRepository.getDynamicPosts(pageNum = nextPage, pageSize = followPostPageSize)
+        followRepository.getDynamicPosts(
+            pageNum = nextPage,
+            pageSize = followPostPageSize,
+            followingId = followingId
+        )
             .onSuccess { response ->
                 followDynamicTotal = response.total
                 val newPosts = response.list.map { followRepository.mapDynamicItemToPost(it) }
@@ -235,6 +252,21 @@ class FollowViewModel : ViewModel() {
     /** Activity/Fragment [androidx.lifecycle.Lifecycle.Event.ON_RESUME] 时静默刷新关注人与动态首屏 */
     fun refreshOnResume() {
         loadAllLists(showPageLoading = false)
+    }
+
+    /** 选择关注用户筛选动态；再次点击同一用户恢复全部关注流。 */
+    fun selectFollowingUser(userId: Long) {
+        val nextUserId = if (_selectedFollowingUserId.value == userId) null else userId
+        _selectedFollowingUserId.value = nextUserId
+        viewModelScope.launch {
+            _pageStatus.value = PageStatus.Loading
+            val postsOk = loadPostsFirstPageSuspend()
+            _pageStatus.value = when {
+                !postsOk -> PageStatus.Fail
+                _followingList.value.isEmpty() -> PageStatus.Empty
+                else -> PageStatus.Success
+            }
+        }
     }
 
     /** 切换点赞状态，调用点赞/取消点赞接口 */

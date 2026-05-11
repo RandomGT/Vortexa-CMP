@@ -75,6 +75,8 @@ internal actual fun platformOpenUrl(url: String) {
 
 internal actual suspend fun platformPickImages(maxCount: Int): List<PickedMedia> = emptyList()
 
+internal actual suspend fun platformPickVideo(): PickedMedia? = null
+
 private fun firstWindow(): UIWindow? {
     return UIApplication.sharedApplication.windows.firstOrNull() as? UIWindow
 }

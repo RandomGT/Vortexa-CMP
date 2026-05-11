@@ -15,12 +15,15 @@ import com.vortexa.model.UserProfileResponse
 import com.vortexa.model.WalletPointData
 import com.vortexa.net.ApiClient
 import com.vortexa.net.ApiException
+import com.vortexa.net.ApiResponse
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.put
 
 class UserRepository(
     private val client: ApiClient = ApiClient
@@ -43,14 +46,38 @@ class UserRepository(
         )
     }
 
-    suspend fun follow(userId: Long): Result<FollowResult> = Result.success(FollowResult(userId))
-    suspend fun unfollow(userId: Long): Result<FollowResult> = Result.success(FollowResult(userId))
-    suspend fun likePost(postId: Long): Result<LikePostData> = Result.success(LikePostData(postId))
-    suspend fun unlikePost(postId: Long): Result<LikePostData> = Result.success(LikePostData(postId))
-    suspend fun collectPost(postId: Long): Result<LikePostData> = Result.success(LikePostData(postId))
-    suspend fun uncollectPost(postId: Long): Result<LikePostData> = Result.success(LikePostData(postId))
-    suspend fun likeComment(commentId: Long): Result<LikeCommentData> = Result.success(LikeCommentData(commentId))
-    suspend fun unlikeComment(commentId: Long): Result<LikeCommentData> = Result.success(LikeCommentData(commentId))
+    suspend fun follow(userId: Long): Result<FollowResult> = runCatching {
+        client.postJson("v/api/user/follow/$userId", emptyJsonBody()).toFollowResult(userId)
+    }
+
+    suspend fun unfollow(userId: Long): Result<FollowResult> = runCatching {
+        client.deleteJson("v/api/user/follow/$userId").toFollowResult(userId)
+    }
+
+    suspend fun likePost(postId: Long): Result<LikePostData> = runCatching {
+        client.postJson("v/api/user/like/post/$postId", emptyJsonBody()).toLikePostData(postId)
+    }
+
+    suspend fun unlikePost(postId: Long): Result<LikePostData> = runCatching {
+        client.deleteJson("v/api/user/like/post/$postId").toLikePostData(postId)
+    }
+
+    suspend fun collectPost(postId: Long): Result<LikePostData> = runCatching {
+        client.postJson("v/api/user/collect/post/$postId", emptyJsonBody()).toLikePostData(postId)
+    }
+
+    suspend fun uncollectPost(postId: Long): Result<LikePostData> = runCatching {
+        client.deleteJson("v/api/user/collect/post/$postId").toLikePostData(postId)
+    }
+
+    suspend fun likeComment(commentId: Long): Result<LikeCommentData> = runCatching {
+        client.postJson("v/api/user/like/comment/$commentId", emptyJsonBody()).toLikeCommentData(commentId)
+    }
+
+    suspend fun unlikeComment(commentId: Long): Result<LikeCommentData> = runCatching {
+        client.deleteJson("v/api/user/like/comment/$commentId").toLikeCommentData(commentId)
+    }
+
     suspend fun uploadAvatar(uri: Any): Result<String> = Result.success("")
     suspend fun updateUserCenter(avatar: String? = null, userName: String? = null): Result<UserCenterUpdateData> =
         Result.success(UserCenterUpdateData(0, userName ?: "Vortexa", avatar))
@@ -62,9 +89,56 @@ class UserRepository(
         title: String,
         content: String,
         mediaListJson: String? = null,
-    ): Result<Unit> = Result.success(Unit)
+    ): Result<Unit> = runCatching {
+        client.putJson(
+            "v/api/user/posts/update/$postId",
+            buildJsonObject {
+                put("module", module)
+                put("title", title)
+                put("content", content)
+                if (mediaListJson != null) put("mediaList", mediaListJson)
+            }
+        )
+    }
     suspend fun getWalletPoint(): Result<WalletPointData> = Result.success(WalletPointData(0))
-    suspend fun deletePost(postId: Long): Result<DeletePostData> = Result.success(DeletePostData("删除成功"))
+    suspend fun deletePost(postId: Long): Result<DeletePostData> = runCatching {
+        client.deleteJson("v/api/user/posts/$postId").toDeletePostData()
+    }
+}
+
+private fun emptyJsonBody(): JsonObject = buildJsonObject {}
+
+private fun ApiResponse.toFollowResult(defaultUserId: Long): FollowResult {
+    val obj = data as? JsonObject
+    val idFromObject = obj?.long("userId") ?: obj?.long("id")
+    val idFromPrimitive = (data as? JsonPrimitive)?.longOrNull
+    return FollowResult(idFromObject ?: idFromPrimitive ?: defaultUserId)
+}
+
+private fun ApiResponse.toLikePostData(defaultPostId: Long): LikePostData {
+    val obj = data as? JsonObject
+    val idFromObject = obj?.long("postId") ?: obj?.long("id")
+    val idFromPrimitive = (data as? JsonPrimitive)?.longOrNull
+    return LikePostData(idFromObject ?: idFromPrimitive ?: defaultPostId)
+}
+
+private fun ApiResponse.toLikeCommentData(defaultCommentId: Long): LikeCommentData {
+    val obj = data as? JsonObject
+    val idFromObject = obj?.long("commentId") ?: obj?.long("id")
+    val idFromPrimitive = (data as? JsonPrimitive)?.longOrNull
+    return LikeCommentData(idFromObject ?: idFromPrimitive ?: defaultCommentId)
+}
+
+private fun ApiResponse.toDeletePostData(): DeletePostData {
+    val obj = data as? JsonObject
+    val primitive = data as? JsonPrimitive
+    return DeletePostData(
+        msg = obj?.string("msg")
+            ?: obj?.string("message")
+            ?: primitive?.takeIf { it.isString }?.content
+            ?: message.takeIf { it.isNotBlank() }
+            ?: "删除成功"
+    )
 }
 
 private fun JsonObject.obj(key: String): JsonObject =

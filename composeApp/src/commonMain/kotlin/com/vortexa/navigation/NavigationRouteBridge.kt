@@ -7,6 +7,7 @@ import com.vortexa.ui.page.login.forget.ForgetActivity
 import com.vortexa.ui.page.login.register.RegisterActivity
 import com.vortexa.ui.page.post.create.PostCreateActivity
 import com.vortexa.ui.page.post.detail.PostDetailActivity
+import com.vortexa.ui.page.post.list.HotPostListActivity
 import com.vortexa.ui.page.profile.collection.CollectionActivity
 import com.vortexa.ui.page.profile.history.HistoryActivity
 import com.vortexa.ui.page.profile.interaction.InteractionActivity
@@ -76,6 +77,7 @@ object NavigationRouteBridge {
         HomeActivity::class -> AppRoute.Home()
         SearchActivity::class -> AppRoute.Search
         PostCreateActivity::class -> AppRoute.PostCreate()
+        HotPostListActivity::class -> AppRoute.HotPostList
         CollectionActivity::class -> AppRoute.ProfileSubPage(ProfileSubPageKind.Collection)
         HistoryActivity::class -> AppRoute.ProfileSubPage(ProfileSubPageKind.History)
         InteractionActivity::class -> AppRoute.ProfileSubPage(ProfileSubPageKind.Interaction)

@@ -23,6 +23,15 @@ object PostDetailActivity {
         content: String,
         avatar: Any? = null,
     ) {
-        NavigationRouteBridge.navigate(AppRoute.PostDetail(postId, openReplyComposer = true))
+        NavigationRouteBridge.navigate(
+            AppRoute.PostDetail(
+                postId = postId,
+                openReplyComposer = true,
+                replyCommentId = commentId,
+                replyAuthorName = authorName,
+                replyCommentSnippet = content,
+                replyAuthorAvatar = avatar as? String,
+            )
+        )
     }
 }

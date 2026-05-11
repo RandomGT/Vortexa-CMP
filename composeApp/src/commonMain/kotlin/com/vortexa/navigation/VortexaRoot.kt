@@ -8,13 +8,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.vortexa.config.TokenConfig
 import com.vortexa.ui.page.home.HomePostCreateSyncCenter
 import com.vortexa.ui.page.home.HomePage
 import com.vortexa.ui.page.login.LoginScreen
 import com.vortexa.ui.page.login.forget.ForgetView
 import com.vortexa.ui.page.login.register.RegisterPage
+import com.vortexa.ui.page.post.create.PostCreateEditArgs
 import com.vortexa.ui.page.post.create.PostCreateView
+import com.vortexa.ui.page.post.detail.PostDetailReplyComposerHint
 import com.vortexa.ui.page.post.detail.PostDetailView
+import com.vortexa.ui.page.post.list.HotPostListView
 import com.vortexa.ui.page.profile.collection.CollectionView
 import com.vortexa.ui.page.profile.history.HistoryView
 import com.vortexa.ui.page.profile.interaction.InteractionView
@@ -60,7 +64,12 @@ fun VortexaRoot() {
         ) {
             composable(NavRoutes.Splash) {
                 SplashPage(onSplashFinish = {
-                    dispatcher.replaceRoot(AppRoute.Login)
+                    val route = if (TokenConfig.getToken().isNotEmpty()) {
+                        AppRoute.Home()
+                    } else {
+                        AppRoute.Login
+                    }
+                    dispatcher.replaceRoot(route)
                 })
             }
             composable(NavRoutes.Home) {
@@ -90,12 +99,19 @@ fun VortexaRoot() {
             composable(NavRoutes.PostDetail) {
                 PostDetailView(
                     postId = NavigationPayloadStore.postId,
-                    openReplyComposerOnLoad = NavigationPayloadStore.openReplyComposer,
+                    replyComposerHint = NavigationPayloadStore.replyComposerHint,
+                    openReplyComposerOnLoad =
+                        NavigationPayloadStore.openReplyComposer &&
+                            NavigationPayloadStore.replyComposerHint == null,
                     onBack = dispatcher::back,
                 )
             }
+            composable(NavRoutes.HotPostList) {
+                HotPostListView(onBackClick = dispatcher::back)
+            }
             composable(NavRoutes.PostCreate) {
                 PostCreateView(
+                    editArgs = NavigationPayloadStore.postCreateEditArgs,
                     onPublishSuccess = {
                         HomePostCreateSyncCenter.notifyPostCreated()
                         dispatcher.back()
@@ -137,6 +153,7 @@ private object NavRoutes {
     const val Search = "search"
     const val SearchResult = "searchResult"
     const val PostDetail = "postDetail"
+    const val HotPostList = "hotPostList"
     const val PostCreate = "postCreate"
     const val ImagePreview = "imagePreview"
     const val ProfileSubPage = "profileSubPage"
@@ -147,9 +164,11 @@ private object NavigationPayloadStore {
     var searchKeyword: String = ""
     var postId: String = ""
     var openReplyComposer: Boolean = false
+    var replyComposerHint: PostDetailReplyComposerHint? = null
     var imagePreviewUrls: List<String> = emptyList()
     var imagePreviewInitialIndex: Int = 0
     var profileSubPageKind: ProfileSubPageKind = ProfileSubPageKind.Collection
+    var postCreateEditArgs: PostCreateEditArgs? = null
 }
 
 private fun AppRoute.toNavRoute(): String = when (this) {
@@ -169,9 +188,30 @@ private fun AppRoute.toNavRoute(): String = when (this) {
     is AppRoute.PostDetail -> {
         NavigationPayloadStore.postId = postId
         NavigationPayloadStore.openReplyComposer = openReplyComposer
+        NavigationPayloadStore.replyComposerHint = replyCommentId?.let {
+            PostDetailReplyComposerHint(
+                commentId = it,
+                authorName = replyAuthorName,
+                commentSnippet = replyCommentSnippet,
+                authorAvatar = replyAuthorAvatar,
+            )
+        }
         NavRoutes.PostDetail
     }
-    is AppRoute.PostCreate -> NavRoutes.PostCreate
+    AppRoute.HotPostList -> NavRoutes.HotPostList
+    is AppRoute.PostCreate -> {
+        NavigationPayloadStore.postCreateEditArgs = editPostId?.takeIf { it.isNotBlank() }?.let {
+            PostCreateEditArgs(
+                postId = it,
+                title = title,
+                content = content,
+                board = board.takeIf { value -> value.isNotBlank() },
+                imageResources = imageResources(),
+                videoResources = videoResources()
+            )
+        }
+        NavRoutes.PostCreate
+    }
     is AppRoute.ImagePreview -> {
         NavigationPayloadStore.imagePreviewUrls = urls()
         NavigationPayloadStore.imagePreviewInitialIndex = initialIndex

@@ -1,7 +1,9 @@
 package com.vortexa.config
 
 import com.vortexa.session.AuthNavGate
-import com.vortexa.util.sp.SpHelper
+import com.vortexa.platform.authSessionGetString
+import com.vortexa.platform.authSessionPutString
+import com.vortexa.platform.authSessionRemove
 
 /**
  *  desc : Http Token 配置
@@ -17,7 +19,7 @@ object TokenConfig {
 
     fun updateToken(token: String) {
         this.token = token
-        SpHelper.putString(TOKEN_KEY, token)
+        authSessionPutString(TOKEN_KEY, token)
         if (token.isNotEmpty()) {
             AuthNavGate.reset()
         }
@@ -27,13 +29,13 @@ object TokenConfig {
     fun getToken(): String {
         //从SharedPreference中获取
         if (token.isEmpty()) {
-            token = SpHelper.getString(TOKEN_KEY)
+            token = authSessionGetString(TOKEN_KEY)
         }
         return token
     }
 
     fun clearToken() {
         token = ""
-        SpHelper.remove(TOKEN_KEY)
+        authSessionRemove(TOKEN_KEY)
     }
 }

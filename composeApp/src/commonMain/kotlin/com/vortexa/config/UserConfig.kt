@@ -2,7 +2,11 @@ package com.vortexa.config
 
 import com.vortexa.model.AuthResponse
 import com.vortexa.model.UserInfo
-import com.vortexa.util.sp.SpHelper
+import com.vortexa.platform.authSessionGetLong
+import com.vortexa.platform.authSessionGetString
+import com.vortexa.platform.authSessionPutLong
+import com.vortexa.platform.authSessionPutString
+import com.vortexa.platform.authSessionRemove
 
 /**
  * 用户信息配置，用于持久化登录/注册接口返回的 userInfo
@@ -40,24 +44,22 @@ object UserConfig {
         cachedAvatar = info.avatar
         cachedNickname = info.nickname
         cachedRole = info.role
-        SpHelper.putAll {
-            putLong(KEY_USER_ID, info.id)
-            putString(KEY_AVATAR, info.avatar ?: "")
-            putString(KEY_NICKNAME, info.nickname ?: "")
-            putString(KEY_ROLE, info.role ?: "")
-        }
+        authSessionPutLong(KEY_USER_ID, info.id)
+        authSessionPutString(KEY_AVATAR, info.avatar ?: "")
+        authSessionPutString(KEY_NICKNAME, info.nickname ?: "")
+        authSessionPutString(KEY_ROLE, info.role ?: "")
     }
 
     fun getUserId(): Long {
         if (cachedUserId == 0L) {
-            cachedUserId = SpHelper.getLong(KEY_USER_ID, 0)
+            cachedUserId = authSessionGetLong(KEY_USER_ID, 0)
         }
         return cachedUserId
     }
 
     fun getAvatar(): String? {
         if (cachedAvatar == null) {
-            val s = SpHelper.getString(KEY_AVATAR, "")
+            val s = authSessionGetString(KEY_AVATAR, "")
             cachedAvatar = if (s.isEmpty()) null else s
         }
         return cachedAvatar
@@ -65,7 +67,7 @@ object UserConfig {
 
     fun getNickname(): String? {
         if (cachedNickname == null) {
-            val s = SpHelper.getString(KEY_NICKNAME, "")
+            val s = authSessionGetString(KEY_NICKNAME, "")
             cachedNickname = if (s.isEmpty()) null else s
         }
         return cachedNickname
@@ -73,7 +75,7 @@ object UserConfig {
 
     fun getRole(): String? {
         if (cachedRole == null) {
-            val s = SpHelper.getString(KEY_ROLE, "")
+            val s = authSessionGetString(KEY_ROLE, "")
             cachedRole = if (s.isEmpty()) null else s
         }
         return cachedRole
@@ -86,16 +88,16 @@ object UserConfig {
         val v = id ?: 0L
         cachedTeacherId = v
         if (v == 0L) {
-            SpHelper.remove(KEY_TEACHER_ID)
+            authSessionRemove(KEY_TEACHER_ID)
         } else {
-            SpHelper.putLong(KEY_TEACHER_ID, v)
+            authSessionPutLong(KEY_TEACHER_ID, v)
         }
     }
 
     /** 已保存的教师 ID，未设置或非教师为 0 */
     fun getTeacherId(): Long {
         if (cachedTeacherId == 0L) {
-            cachedTeacherId = SpHelper.getLong(KEY_TEACHER_ID, 0L)
+            cachedTeacherId = authSessionGetLong(KEY_TEACHER_ID, 0L)
         }
         return cachedTeacherId
     }
@@ -121,10 +123,10 @@ object UserConfig {
         cachedNickname = null
         cachedRole = null
         cachedTeacherId = 0
-        SpHelper.remove(KEY_USER_ID)
-        SpHelper.remove(KEY_AVATAR)
-        SpHelper.remove(KEY_NICKNAME)
-        SpHelper.remove(KEY_ROLE)
-        SpHelper.remove(KEY_TEACHER_ID)
+        authSessionRemove(KEY_USER_ID)
+        authSessionRemove(KEY_AVATAR)
+        authSessionRemove(KEY_NICKNAME)
+        authSessionRemove(KEY_ROLE)
+        authSessionRemove(KEY_TEACHER_ID)
     }
 }

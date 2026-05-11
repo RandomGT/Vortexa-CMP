@@ -1,10 +1,15 @@
 package com.vortexa.session
 
-import com.vortexa.navigation.AppRoute
-import com.vortexa.navigation.NavigationRouteBridge
-
 object AuthNavGate {
+    private var navigating = false
+
     fun reset() {
-        NavigationRouteBridge.replaceRoot(AppRoute.Login)
+        navigating = false
+    }
+
+    fun tryEnterUnauthorizedFlow(): Boolean {
+        if (navigating) return false
+        navigating = true
+        return true
     }
 }

@@ -605,7 +605,19 @@ class PostDetailViewModel(
             _replyLoading.value = true
             Log.i(TAG, "sendComment: start, postId=$postId, parentCommentId=$parentCommentId")
             try {
-                val finalMediaList = selectedMediaUris.ifEmpty { null }
+                val uploadedMediaList = mutableListOf<String>()
+                selectedMediaUris.forEach { uri ->
+                    if (uri.startsWith("http://") || uri.startsWith("https://")) {
+                        uploadedMediaList.add(uri)
+                    } else {
+                        val uploaded = homeRepository.uploadPostImage(uri).getOrElse { error ->
+                            Log.e(TAG, "sendComment: upload media failed, uri=$uri", error)
+                            throw error
+                        }
+                        uploadedMediaList.add(uploaded.url)
+                    }
+                }
+                val finalMediaList = uploadedMediaList.ifEmpty { null }
                 homeRepository.postComment(
                     postId = postId,
                     parentCommentId = parentCommentId,
@@ -747,7 +759,7 @@ class PostDetailViewModel(
                 tagName = topicSection,
                 likeCount = info.likeCount,
                 commentCount = info.replyCount,
-                isLiked = false,
+                isLiked = info.isLiked,
                 isCollect = info.isCollect,
                 userId = author.authorId,
                 title = info.title,
@@ -768,7 +780,7 @@ class PostDetailViewModel(
             likeCount = info.likeCount,
             collectCount = info.collectCount,
             commentCount = info.replyCount,
-            isLiked = false
+            isLiked = info.isLiked
         )
     }
 

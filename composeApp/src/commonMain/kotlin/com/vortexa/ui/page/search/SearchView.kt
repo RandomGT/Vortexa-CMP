@@ -1,6 +1,5 @@
 package com.vortexa.ui.page.search
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -33,8 +32,7 @@ import com.vortexa.ui.page.search.result.SearchResultView
  */
 @Composable
 fun SearchView(onBack: () -> Unit = {}) {
-    val context = Context()
-    val repo = remember { SearchHistoryRepository(context.applicationContext) }
+    val repo = remember { SearchHistoryRepository() }
     val viewModel: SearchViewModel = vortexaViewModel { SearchViewModel() }
     var history by remember { mutableStateOf(repo.getHistory()) }
     var query by remember { mutableStateOf("") }
@@ -100,9 +98,9 @@ fun SearchView(onBack: () -> Unit = {}) {
                         }
                     }
                 )
-//                Spacer(modifier = Modifier.height(24.dp))
-//                SearchTutorRecommendSection(tutors = tutorList)
-//                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+                SearchTutorRecommendSection(tutors = tutorList)
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

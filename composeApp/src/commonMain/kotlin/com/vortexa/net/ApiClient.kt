@@ -9,12 +9,18 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.accept
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLBuilder
@@ -54,11 +60,61 @@ object ApiClient {
         }
     }
 
-    suspend fun postJson(path: String, body: JsonObject): ApiResponse {
-        return try {
-            val response = httpClient.post(resolveUrl(path)) {
+    suspend fun postJson(path: String, body: JsonObject, query: Map<String, Any?> = emptyMap()): ApiResponse {
+        return executeJsonRequest {
+            httpClient.post(resolveUrl(path, query)) {
                 setBody(body)
             }
+        }
+    }
+
+    suspend fun putJson(path: String, body: JsonObject, query: Map<String, Any?> = emptyMap()): ApiResponse {
+        return executeJsonRequest {
+            httpClient.put(resolveUrl(path, query)) {
+                setBody(body)
+            }
+        }
+    }
+
+    suspend fun deleteJson(path: String, query: Map<String, Any?> = emptyMap()): ApiResponse {
+        return executeJsonRequest {
+            httpClient.delete(resolveUrl(path, query))
+        }
+    }
+
+    suspend fun postMultipart(
+        path: String,
+        fieldName: String,
+        fileName: String,
+        bytes: ByteArray,
+        contentType: String
+    ): ApiResponse {
+        return executeJsonRequest {
+            httpClient.post(resolveUrl(path)) {
+                setBody(
+                    MultiPartFormDataContent(
+                        formData {
+                            append(
+                                key = fieldName,
+                                value = bytes,
+                                headers = Headers.build {
+                                    append(
+                                        HttpHeaders.ContentDisposition,
+                                        "form-data; name=\"$fieldName\"; filename=\"$fileName\""
+                                    )
+                                    append(HttpHeaders.ContentType, contentType)
+                                }
+                            )
+                        }
+                    )
+                )
+            }
+        }
+    }
+
+    private suspend fun executeJsonRequest(request: suspend () -> HttpResponse): ApiResponse {
+        return try {
+            val response = request()
             if (response.status != HttpStatusCode.OK) {
                 throw ApiException(response.status.value, response.bodyAsText().ifBlank { response.status.description })
             }

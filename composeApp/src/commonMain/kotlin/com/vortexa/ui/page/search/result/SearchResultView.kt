@@ -7,23 +7,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
+import com.vortexa.ui.component.pageStatus.PageStatus
+import com.vortexa.ui.component.pageStatus.PageStatusView
+import com.vortexa.ui.page.search.result.composite.CompositePage
 import com.vortexa.ui.page.search.result.post.PostPage
-import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.viewmodel.vortexaViewModel
 
 /**
  * 为 `true` 时展示 TabBar + 多页 Pager；为 `false` 时仅展示帖文列表并隐藏 Tab、禁止滑动切换。
  * 多 Tab 能力保留，后续产品开放时改为 `true` 即可。
  */
-private const val SHOW_SEARCH_RESULT_TAB_BAR = false
+private const val SHOW_SEARCH_RESULT_TAB_BAR = true
 
 /**
  * 搜索结果页：顶部为 TabBar（综合/帖文/用户/导师/工具箱/课程），下方为 HorizontalPager 对应 6 个子页。
@@ -85,15 +86,9 @@ fun SearchResultView(keyword: String = "") {
                 userScrollEnabled = SHOW_SEARCH_RESULT_TAB_BAR,
                 pageContent = { page ->
                     when (page) {
+                        SEARCH_RESULT_GENERAL_TAB_INDEX -> CompositePage(viewModel = viewModel)
                         postPageIndex -> PostPage(viewModel = viewModel)
-                        else -> Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Colors.red_FF383C),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = SearchResultTabs[page], color = Colors.gray_6A7282)
-                        }
+                        else -> UnsupportedSearchResultPage()
                     }
                 }
             )
@@ -104,4 +99,15 @@ fun SearchResultView(keyword: String = "") {
 @Composable
 fun SearchResultPreview() {
     SearchResultView()
+}
+
+@Composable
+private fun UnsupportedSearchResultPage() {
+    PageStatusView(
+        status = PageStatus.Empty,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
+        emptyMessage = "暂无搜索结果"
+    )
 }

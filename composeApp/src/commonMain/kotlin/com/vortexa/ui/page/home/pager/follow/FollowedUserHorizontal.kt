@@ -1,6 +1,7 @@
 package com.vortexa.ui.page.home.pager.follow
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,7 @@ import vortexa.composeapp.generated.resources.profile_default
 @Composable
 fun FollowedUserItem(
     user: FollowedUser,
+    selected: Boolean = false,
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -50,6 +52,14 @@ fun FollowedUserItem(
             modifier = Modifier.size(54.dp),
             contentAlignment = Alignment.Center
         ) {
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .size(54.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, Colors.blue_277DFF, CircleShape)
+                )
+            }
             // 头像 48dp 圆形：有 avatar 则加载网络图，否则昵称首字占位
             val avatarUrl = user.avatar?.takeIf { it.isNotBlank() }
             if (avatarUrl != null) {
@@ -107,6 +117,7 @@ fun FollowedUserItem(
 @Composable
 fun FollowedUserHorizontal(
     users: List<FollowedUser>,
+    selectedUserId: Long? = null,
     onUserClick: (FollowedUser) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -123,6 +134,7 @@ fun FollowedUserHorizontal(
         items(users, key = { it.userId }) { user ->
             FollowedUserItem(
                 user = user,
+                selected = selectedUserId == user.userId,
                 onClick = { onUserClick(user) }
             )
         }

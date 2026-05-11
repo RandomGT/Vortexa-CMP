@@ -43,6 +43,9 @@ val SearchResultTabs = listOf("综合", "帖文", "用户", "导师", "工具箱
 /** Tab 索引对应的接口 type 参数 */
 val SearchResultTypes = listOf("general", "post", "user", "teacher", "toolbox", "course")
 
+/** 「综合」对应下标，与 [SearchResultTypes] 中 `"general"` 一致 */
+const val SEARCH_RESULT_GENERAL_TAB_INDEX = 0
+
 /** 「帖文」对应下标，与 [SearchResultTypes] 中 `"post"` 一致 */
 const val SEARCH_RESULT_POST_TAB_INDEX = 1
 

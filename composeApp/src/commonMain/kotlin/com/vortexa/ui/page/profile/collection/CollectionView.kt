@@ -1,6 +1,5 @@
 package com.vortexa.ui.page.profile.collection
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +21,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import com.vortexa.ui.component.ListEndFooter
@@ -49,7 +49,7 @@ fun CollectionView(
     val selectedFilterIndex by viewModel.selectedFilterIndex.collectAsState()
     val hasMoreCollections by viewModel.hasMoreCollections.collectAsState()
     val loadingMoreCollections by viewModel.loadingMoreCollections.collectAsState()
-    val context = Context()
+    val context = LocalContext.current
 
     val listState = rememberLazyListState()
 

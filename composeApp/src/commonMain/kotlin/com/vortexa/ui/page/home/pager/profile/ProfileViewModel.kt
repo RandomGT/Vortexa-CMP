@@ -1,7 +1,6 @@
 package com.vortexa.ui.page.home.pager.profile
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -9,13 +8,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vortexa.model.UserCenterInfo
 import com.vortexa.repository.UserRepository
+import com.vortexa.navigation.AppRoute
+import com.vortexa.navigation.NavigationRouteBridge
+import com.vortexa.navigation.ProfileSubPageKind
 import com.vortexa.ui.component.pageStatus.PageStatus
-import com.vortexa.ui.page.creator.CreatorCenterActivity
-import com.vortexa.ui.page.profile.collection.CollectionActivity
-import com.vortexa.ui.page.profile.history.HistoryActivity
-import com.vortexa.ui.page.profile.interaction.InteractionActivity
 import com.vortexa.ui.page.teach.myclass.MyClassActivity
-import com.vortexa.ui.page.login.LoginActivity
+import com.vortexa.util.ToastUtil
 import com.vortexa.util.extension.routeToPage
 import com.vortexa.config.TokenConfig
 import com.vortexa.config.UserConfig
@@ -130,23 +128,19 @@ class ProfileViewModel : ViewModel() {
             }
     }
     fun jumpToCreator(context: Context) {
-        val intent = Intent(context, CreatorCenterActivity::class)
-        context.startActivity(intent)
+        ToastUtil.show(context, "创作中心页面即将上线")
     }
 
     fun jumpToInteraction(context: Context) {
-        val intent = Intent(context, InteractionActivity::class)
-        context.startActivity(intent)
+        NavigationRouteBridge.navigate(AppRoute.ProfileSubPage(ProfileSubPageKind.Interaction))
     }
 
     fun jumpToCollection(context: Context) {
-        val intent = Intent(context, CollectionActivity::class)
-        context.startActivity(intent)
+        NavigationRouteBridge.navigate(AppRoute.ProfileSubPage(ProfileSubPageKind.Collection))
     }
 
     fun jumpToHistory(context: Context) {
-        val intent = Intent(context, HistoryActivity::class)
-        context.startActivity(intent)
+        NavigationRouteBridge.navigate(AppRoute.ProfileSubPage(ProfileSubPageKind.History))
     }
 
     fun jumpToCourse(context: Context) {
@@ -227,10 +221,7 @@ class ProfileViewModel : ViewModel() {
         TokenConfig.clearToken()
         UserConfig.clear()
         _teacherId.value = 0L
-        val intent = Intent(context, LoginActivity::class).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        context.startActivity(intent)
+        NavigationRouteBridge.replaceRoot(AppRoute.Login)
     }
 
     companion object {

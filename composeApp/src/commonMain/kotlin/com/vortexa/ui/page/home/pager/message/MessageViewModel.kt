@@ -1,7 +1,6 @@
 package com.vortexa.ui.page.home.pager.message
 
 import android.content.Context
-import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,8 +9,7 @@ import com.vortexa.model.DialogItem
 import com.vortexa.net.auth.isLoginRequired
 import com.vortexa.repository.MessageRepository
 import com.vortexa.ui.component.pageStatus.PageStatus
-import com.vortexa.ui.page.systemmsg.SystemMessageActivity
-import com.vortexa.ui.page.systemmsg.SystemMessagePageType
+import com.vortexa.util.ToastUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -245,9 +243,9 @@ class MessageViewModel(
 
     /**
      * 点击某条对话框。
-     * 当前统一跳转系统通知页，后续可按 dialogId 区分跳转聊天详情。
+     * 详情页尚未迁移时消费点击并给出提示，避免从首页启动未接入页面。
      *
-     * @param context 用于 startActivity
+     * @param context 用于 Toast
      * @param dialog 被点击的对话框
      */
     fun onMessageClick(context: Context, dialog: DialogItem) {
@@ -258,24 +256,12 @@ class MessageViewModel(
         if (shouldMarkReadOnOpen) {
             clearDialogUnreadLocally(dialog.dialogId)
         }
-        val intent = Intent(context, SystemMessageActivity::class).apply {
-            when {
-                dialog.userInfo.userId == SYSTEM_NOTIFICATION_USER_ID -> {
-                    putExtra(SystemMessageActivity.EXTRA_MESSAGE_TYPE, SystemMessagePageType.SYSTEM)
-                    if (dialog.unreadCount > 0) {
-                        putExtra(SystemMessageActivity.EXTRA_MARK_READ_DIALOG_ID, dialog.dialogId.toLong())
-                        putExtra(SystemMessageActivity.EXTRA_MARK_READ_MESSAGE_ID, dialog.lastMessage.messageId.toLong())
-                    }
-                }
-                isClassroomAssistantDialog(dialog) -> {
-                    putExtra(SystemMessageActivity.EXTRA_MESSAGE_TYPE, SystemMessagePageType.CLASSROOM_ASSISTANT)
-                    if (dialog.unreadCount > 0) {
-                        putExtra(SystemMessageActivity.EXTRA_MARK_READ_DIALOG_ID, dialog.dialogId.toLong())
-                        putExtra(SystemMessageActivity.EXTRA_MARK_READ_MESSAGE_ID, dialog.lastMessage.messageId.toLong())
-                    }
-                }
-            }
+        if (dialog.userInfo.userId == SYSTEM_NOTIFICATION_USER_ID || isClassroomAssistantDialog(dialog)) {
+            Log.i(TAG, "System message route is not migrated yet; click consumed safely")
+            ToastUtil.show(context, "系统消息页面即将上线")
+        } else {
+            Log.i(TAG, "Chat route is not migrated yet; click consumed safely")
+            ToastUtil.show(context, "私信页面即将上线")
         }
-        context.startActivity(intent)
     }
 }

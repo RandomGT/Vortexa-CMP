@@ -37,6 +37,7 @@ data class AuthorInfo(
  * @param likeCount 点赞数
  * @param collectCount 收藏数
  * @param replyCount 回复数
+ * @param isLiked 当前用户是否已点赞
  * @param isCollect 当前用户是否已收藏
  * @param publishTime 发布时间
  * @param mediaList 媒体资源列表（图片/视频 URL）
@@ -51,6 +52,7 @@ data class PostInfo(
     val likeCount: Int,
     val collectCount: Int,
     val replyCount: Int,
+    val isLiked: Boolean = false,
     val isCollect: Boolean,
     val publishTime: String?,
     val mediaList: List<String>? = null,

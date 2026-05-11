@@ -12,6 +12,10 @@ enum class MediaType {
 
 object MediaPicker {
     suspend fun pickImages(maxCount: Int): List<PickedMedia> = platformPickImages(maxCount)
+
+    suspend fun pickVideo(): PickedMedia? = platformPickVideo()
 }
 
 internal expect suspend fun platformPickImages(maxCount: Int): List<PickedMedia>
+
+internal expect suspend fun platformPickVideo(): PickedMedia?

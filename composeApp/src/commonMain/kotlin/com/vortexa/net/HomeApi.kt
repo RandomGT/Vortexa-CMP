@@ -121,6 +121,46 @@ class HomeApi(
         return (response.data as? JsonObject)?.toCreatePostResponse() ?: CreatePostResponse()
     }
 
+    suspend fun updatePost(
+        postId: Long,
+        title: String,
+        content: String,
+        module: String,
+        mediaListJson: String? = null
+    ) {
+        client.putJson(
+            "$PATH_UPDATE_POST/$postId",
+            buildJsonObject {
+                put("module", module)
+                put("title", title)
+                put("content", content)
+                if (mediaListJson != null) put("mediaList", mediaListJson)
+            }
+        )
+    }
+
+    suspend fun uploadPostImage(
+        fileName: String,
+        bytes: ByteArray,
+        contentType: String
+    ): PostImageUploadData {
+        val response = client.postMultipart(
+            path = PATH_UPLOAD_POST_IMAGE,
+            fieldName = "file",
+            fileName = fileName,
+            bytes = bytes,
+            contentType = contentType
+        )
+        val data = response.data as? JsonObject
+        val url = data?.stringValue("url")
+            ?: (response.data as? JsonPrimitive)?.takeIf { it.isString }?.content
+            ?: response.url
+        if (url.isNullOrBlank()) {
+            throw ApiException(-1, "Upload response url is null")
+        }
+        return PostImageUploadData(url)
+    }
+
     suspend fun postComment(
         postId: Long,
         parentCommentId: Long?,
@@ -147,6 +187,8 @@ class HomeApi(
         private const val PATH_POSTS = "v/api/home/posts"
         private const val PATH_COMMENTS = "v/api/home/comments"
         private const val PATH_CREATE_POST = "v/api/home/post/insert"
+        private const val PATH_UPDATE_POST = "v/api/user/posts/update"
+        private const val PATH_UPLOAD_POST_IMAGE = "v/api/home/post/image"
         private const val PATH_POST_COMMENT = "v/api/home/discussion/comments"
     }
 }
@@ -250,7 +292,7 @@ private fun JsonObject.toPostDetailResponse(): PostDetailResponse = PostDetailRe
     authorInfo = (this["authorInfo"] as? JsonObject)?.toAuthorInfo()
         ?: AuthorInfo(0L, null, "", false),
     postInfo = (this["postInfo"] as? JsonObject)?.toPostInfo()
-        ?: PostInfo(0L, null, null, null, null, 0, 0, 0, false, null)
+        ?: PostInfo(0L, null, null, null, null, 0, 0, 0, false, false, null)
 )
 
 private fun JsonObject.toAuthorInfo(): AuthorInfo = AuthorInfo(
@@ -269,6 +311,7 @@ private fun JsonObject.toPostInfo(): PostInfo = PostInfo(
     likeCount = int("likeCount") ?: 0,
     collectCount = int("collectCount") ?: 0,
     replyCount = int("replyCount") ?: 0,
+    isLiked = boolean("isLiked") ?: false,
     isCollect = boolean("isCollect") ?: false,
     publishTime = stringValue("publishTime"),
     mediaList = stringList("mediaList"),

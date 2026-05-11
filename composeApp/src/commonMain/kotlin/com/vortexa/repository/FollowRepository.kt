@@ -34,11 +34,15 @@ class FollowRepository(
             )
         }
 
-    suspend fun getDynamicPosts(pageNum: Int = 1, pageSize: Int = 20): Result<DynamicPostsResponse> =
+    suspend fun getDynamicPosts(
+        pageNum: Int = 1,
+        pageSize: Int = 20,
+        followingId: Long? = null
+    ): Result<DynamicPostsResponse> =
         runCatching {
             val response = client.getJson(
                 "v/api/dynamic/posts",
-                mapOf("pageNum" to pageNum, "pageSize" to pageSize)
+                mapOf("pageNum" to pageNum, "pageSize" to pageSize, "followingId" to followingId)
             )
             val data = response.dataObject()
             DynamicPostsResponse(

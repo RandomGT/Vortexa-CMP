@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.unit.dp
 import com.vortexa.ui.viewmodel.vortexaViewModel
@@ -200,7 +201,7 @@ private fun InteractionPageContent(
     onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context: Any? = null
+    val context = LocalContext.current
     val listState = rememberLazyListState()
 
     LaunchedEffect(listState, hasMore, loadingMore, pageStatus, list.size) {

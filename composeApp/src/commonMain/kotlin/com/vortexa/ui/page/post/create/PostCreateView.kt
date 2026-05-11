@@ -5,9 +5,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -39,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.onFocusChanged
@@ -55,6 +53,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.vortexa.platform.MediaPicker
+import com.vortexa.platform.MediaType
+import com.vortexa.platform.PickedMedia
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import com.vortexa.ui.page.post.detail.ComposerMediaPreview
 import com.vortexa.ui.page.post.detail.ComposerState
@@ -65,6 +66,7 @@ import com.vortexa.ui.theme.FontRegular
 import com.vortexa.ui.theme.FontSemiBold
 import com.vortexa.util.ImagePickValidator
 import com.vortexa.util.ToastUtil
+import kotlinx.coroutines.launch
 
 private const val TITLE_MAX_LENGTH = 30
 
@@ -82,6 +84,7 @@ private val POST_CREATE_BODY_SCROLL_MAX_HEIGHT = 360.dp
 fun PostCreateView(
     modifier: Modifier = Modifier,
     viewModel: PostCreateViewModel = vortexaViewModel { PostCreateViewModel() },
+    editArgs: PostCreateEditArgs? = null,
     onPublishSuccess: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -100,34 +103,15 @@ fun PostCreateView(
     val selectedMediaList = remember { androidx.compose.runtime.mutableStateListOf<PostCreateSelectedMedia>() }
     val density = LocalDensity.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val coroutineScope = rememberCoroutineScope()
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
     // 工具条模式无底栏「收起占位」，仅在编辑标题时隐藏，否则保留图/视频等入口
     val shouldShowBottomBar = !isTitleFocused
 
-    val pickImageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        appendSelectedMedia(
-            uri = uri,
-            mediaType = PostCreateMediaType.Image,
-            selectedMediaList = selectedMediaList,
-            context = context
-        )
-    }
-    val pickVideoLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        appendSelectedMedia(
-            uri = uri,
-            mediaType = PostCreateMediaType.Video,
-            selectedMediaList = selectedMediaList,
-            context = context
-        )
-    }
-
-    LaunchedEffect(Unit) {
-        val act = context as? PostCreateActivity ?: return@LaunchedEffect
-        val args = PostCreateActivity.parseEditArgs(act.intent) ?: return@LaunchedEffect
+    LaunchedEffect(editArgs) {
+        val args = editArgs
+            ?: (context as? PostCreateActivity)?.let { PostCreateActivity.parseEditArgs(it.intent) }
+            ?: return@LaunchedEffect
         viewModel.applyEditDraft(
             postId = args.postId,
             title = args.title,
@@ -135,6 +119,7 @@ fun PostCreateView(
             board = args.board
         )
         contentValue = TextFieldValue(args.content)
+        selectedMediaList.clear()
         for (url in args.imageResources) {
             val s = url.trim()
             if (s.isEmpty()) continue
@@ -166,6 +151,7 @@ fun PostCreateView(
         if (msg.isEmpty()) return@LaunchedEffect
         val toastText = when {
             msg == POST_CREATE_ERR_TITLE_EMPTY || msg == POST_CREATE_ERR_BODY_EMPTY -> msg
+            msg.contains("暂不支持上传本地视频") -> msg
             else -> "发布失败，请稍后重试"
         }
         ToastUtil.show(context, toastText)
@@ -363,15 +349,37 @@ fun PostCreateView(
                     onSendClick = {},
                     onPickImageClick = {
                         Log.d(TAG, "PostCreate open image picker")
-                        pickImageLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
+                        coroutineScope.launch {
+                            val imageCount = selectedMediaList.count { it.type == PostCreateMediaType.Image }
+                            val remaining = (MAX_POST_CREATE_IMAGES - imageCount).coerceAtLeast(0)
+                            if (remaining == 0) {
+                                ToastUtil.show(context, "最多添加 9 张图片")
+                                return@launch
+                            }
+                            val picked = MediaPicker.pickImages(remaining)
+                                .filter { it.type == MediaType.Image }
+                            appendPickedMedia(
+                                picked = picked,
+                                selectedMediaList = selectedMediaList,
+                                context = context
+                            )
+                        }
                     },
                     onPickVideoClick = {
                         Log.d(TAG, "PostCreate open video picker")
-                        pickVideoLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
-                        )
+                        coroutineScope.launch {
+                            val picked = MediaPicker.pickVideo()
+                            if (picked == null) {
+                                ToastUtil.show(context, "暂不支持上传本地视频")
+                                return@launch
+                            }
+                            appendSelectedMedia(
+                                uri = Uri.parse(picked.uri),
+                                mediaType = PostCreateMediaType.Video,
+                                selectedMediaList = selectedMediaList,
+                                context = context
+                            )
+                        }
                     },
                     onClearPreviewClick = {},
                     onRemovePreviewAt = { index ->
@@ -414,6 +422,25 @@ fun PostCreateView(
 @Preview(showBackground = true)
 private fun PostCreateViewPreview() {
     PostCreateView()
+}
+
+private fun appendPickedMedia(
+    picked: List<PickedMedia>,
+    selectedMediaList: SnapshotStateList<PostCreateSelectedMedia>,
+    context: Context
+) {
+    if (picked.isEmpty()) {
+        Log.d(TAG, "Image picker cancelled or returned no supported image")
+        return
+    }
+    for (item in picked) {
+        appendSelectedMedia(
+            uri = Uri.parse(item.uri),
+            mediaType = if (item.type == MediaType.Video) PostCreateMediaType.Video else PostCreateMediaType.Image,
+            selectedMediaList = selectedMediaList,
+            context = context
+        )
+    }
 }
 
 /**

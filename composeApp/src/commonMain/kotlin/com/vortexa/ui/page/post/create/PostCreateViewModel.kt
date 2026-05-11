@@ -189,13 +189,25 @@ class PostCreateViewModel(
     }
 
     /**
-     * 将发布页选中的媒体解析为 URL 列表：已存在的 http(s) 直传；本地图片先上传；本地视频暂无上传能力则跳过。
+     * 将发布页选中的媒体解析为 URL 列表：已存在的 http(s) 直传；本地图片先上传。
+     * Android 候选第一阶段没有本地视频上传接口；遇到本地视频时明确失败，避免静默假成功。
      */
     private suspend fun resolveMediaUrlsForPublish(
         items: List<PostCreateSelectedMedia>
     ): List<String> = items.mapNotNull { item ->
         val value = item.uri.toString()
-        value.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+        val lowerValue = value.lowercase()
+        if (lowerValue.startsWith("http://") || lowerValue.startsWith("https://")) {
+            value
+        } else if (item.type == PostCreateMediaType.Image) {
+            homeRepository.uploadPostImage(item.uri)
+                .getOrThrow()
+                .url
+                .takeIf { it.isNotBlank() }
+                ?: throw IllegalStateException("图片上传失败")
+        } else {
+            throw IllegalStateException("暂不支持上传本地视频，请先移除视频")
+        }
     }
 
     /** 清除发布错误（用户可再次尝试） */
