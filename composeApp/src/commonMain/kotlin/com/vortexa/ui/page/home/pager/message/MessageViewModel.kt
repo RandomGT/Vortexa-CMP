@@ -1,6 +1,5 @@
 package com.vortexa.ui.page.home.pager.message
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +8,7 @@ import com.vortexa.model.DialogItem
 import com.vortexa.net.auth.isLoginRequired
 import com.vortexa.repository.MessageRepository
 import com.vortexa.ui.component.pageStatus.PageStatus
+import com.vortexa.ui.page.systemmsg.SystemMessagePageType
 import com.vortexa.util.ToastUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -242,26 +242,34 @@ class MessageViewModel(
     }
 
     /**
-     * 点击某条对话框。
-     * 详情页尚未迁移时消费点击并给出提示，避免从首页启动未接入页面。
-     *
-     * @param context 用于 Toast
-     * @param dialog 被点击的对话框
+     * 点击系统通知 / 课堂小助手会话，返回 SystemMessageView 所需参数。
+     * 具体页面打开方式由宿主 composable/nav layer 注入，ViewModel 只负责识别和本地未读消费。
      */
-    fun onMessageClick(context: Context, dialog: DialogItem) {
-        Log.d(TAG, "onMessageClick: dialogId=${dialog.dialogId} userName=${dialog.userInfo.userName}")
-        val shouldMarkReadOnOpen =
-            dialog.unreadCount > 0 &&
-                (dialog.userInfo.userId == SYSTEM_NOTIFICATION_USER_ID || isClassroomAssistantDialog(dialog))
-        if (shouldMarkReadOnOpen) {
+    fun onSystemMessageClick(dialog: DialogItem): SystemMessageEntry? {
+        Log.d(TAG, "onSystemMessageClick: dialogId=${dialog.dialogId} userName=${dialog.userInfo.userName}")
+        val messageType = when {
+            dialog.userInfo.userId == SYSTEM_NOTIFICATION_USER_ID -> SystemMessagePageType.SYSTEM
+            isClassroomAssistantDialog(dialog) -> SystemMessagePageType.CLASSROOM_ASSISTANT
+            else -> return null
+        }
+        if (dialog.unreadCount > 0) {
             clearDialogUnreadLocally(dialog.dialogId)
         }
-        if (dialog.userInfo.userId == SYSTEM_NOTIFICATION_USER_ID || isClassroomAssistantDialog(dialog)) {
-            Log.i(TAG, "System message route is not migrated yet; click consumed safely")
-            ToastUtil.show(context, "系统消息页面即将上线")
-        } else {
-            Log.i(TAG, "Chat route is not migrated yet; click consumed safely")
-            ToastUtil.show(context, "私信页面即将上线")
-        }
+        return SystemMessageEntry(
+            messageType = messageType,
+            markReadDialogId = dialog.dialogId.toLong().takeIf { it > 0 },
+            markReadMessageId = dialog.lastMessage.messageId.toLong().takeIf { it > 0 }
+        )
+    }
+
+    fun onPrivateMessageClick(dialog: DialogItem) {
+        Log.i(TAG, "Private message route is not migrated yet: dialogId=${dialog.dialogId}")
+        ToastUtil.show("私信页面即将上线")
     }
 }
+
+data class SystemMessageEntry(
+    val messageType: Int,
+    val markReadDialogId: Long?,
+    val markReadMessageId: Long?
+)

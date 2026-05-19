@@ -1,6 +1,6 @@
 package com.vortexa.ui.page.home.pager.message
 
-import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -53,8 +52,8 @@ import kotlinx.coroutines.flow.collect
 fun MessageView(
     viewModel: MessageViewModel = vortexaViewModel { MessageViewModel() },
     isSelected: Boolean = true,
+    onSystemMessageClick: (SystemMessageEntry) -> Unit = {},
 ) {
-    val context = Context()
     val lifecycleOwner = LocalLifecycleOwner.current
     val dialogList by viewModel.dialogList.collectAsState()
     val pageStatus by viewModel.pageStatus.collectAsState()
@@ -155,7 +154,14 @@ fun MessageView(
                             time = rowTime,
                             preview = rowPreview,
                             unreadCount = dialog.unreadCount,
-                            onClick = { viewModel.onMessageClick(context, dialog) }
+                            onClick = {
+                                val entry = viewModel.onSystemMessageClick(dialog)
+                                if (entry != null) {
+                                    onSystemMessageClick(entry)
+                                } else {
+                                    viewModel.onPrivateMessageClick(dialog)
+                                }
+                            }
                         )
                     }
                     if (pageStatus == PageStatus.Success && dialogList.isNotEmpty()) {

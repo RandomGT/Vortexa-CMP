@@ -206,6 +206,7 @@ fun ProfileSubPageShell(kind: ProfileSubPageKind, onBack: () -> Unit, onNavigate
                 ProfileSubPageKind.Collection -> listOf("收藏帖子", "收藏课程")
                 ProfileSubPageKind.History -> listOf("浏览记录", "评论记录")
                 ProfileSubPageKind.Interaction -> listOf("点赞", "评论", "回复")
+                ProfileSubPageKind.Focus -> listOf("关注用户", "关注导师")
             },
         )
         Button(onClick = { onNavigate(AppRoute.PostDetail("1")) }) { Text("打开示例帖子") }

@@ -18,7 +18,7 @@ CMP active source:
 
 - `composeApp/src/commonMain/kotlin/com/vortexa`
 
-Important finding: many P2 Android pages are present in `migrated/android-source-candidate`, but only Activity shells or partial files exist in `src/commonMain`. CMP routing currently covers Splash, Login/Register/Forget, Home, Search/SearchResult, PostDetail, PostCreate, ImagePreview, and ProfileSubPage for Collection/History/Interaction. The first migration phase should add routeable pure-UI pages and shared logic, while excluding RTC/video-room implementation.
+Important finding: many P2 Android pages were present in `migrated/android-source-candidate`, while only Activity shells or partial files existed in `src/commonMain`. As of 2026-05-19, CMP routing covers Splash, Login/Register/Forget, Home, Search/SearchResult, PostDetail, PostCreate, ImagePreview, ProfileSubPage for Collection/History/Interaction/Focus, Creator/DataCenter, SystemMessage, OtherUserProfile, PaperManagement, PublishPostShortcut, Teach non-RTC pages, and Wallet pages. RTC/video-room implementation remains excluded.
 
 ## Agent Split
 
@@ -173,6 +173,7 @@ If a command is unavailable for the current local setup, record the exact failur
   2. Add typed routes for creator center, data center, interaction, paper management.
   3. Replace quick-entry navigation with callbacks supplied by CMP route tree.
 - Acceptance: Creator center screen is routeable from profile/menu; data cards, banner activities, task cards match Android layout; no Activity/Intent imports remain.
+- 2026-05-19 P2 AgentTeam result: `CreatorCenterPage`/`CreatorCenterView`, `CreatorViewModel`, `CreatorRepository`, data card, quick entry, banner, task and header components are in commonMain. Profile menu opens `AppRoute.CreatorCenter`; quick entries route to DataCenter, Interaction, and PaperManagement.
 
 ### P2-02 Data Center
 
@@ -186,6 +187,7 @@ If a command is unavailable for the current local setup, record the exact failur
   2. Convert Activity `teacherId/userId` extras to route parameters if needed.
   3. Keep sorting popup and list pagination behavior identical.
 - Acceptance: overview metrics and post data list render with Android copy/layout; sorting and empty/loading/error states match candidate source.
+- 2026-05-19 P2 AgentTeam result: `DataCenterPage`/`DataCenterView`, overview card, sort popup, post item/list, viewmodel and repository plumbing compile in commonMain. Post click routes to `AppRoute.PostDetail`.
 
 ### P2-03 System Message
 
@@ -199,6 +201,7 @@ If a command is unavailable for the current local setup, record the exact failur
   2. Add `AppRoute.SystemMessage(type)` or equivalent typed route.
   3. Replace item click side effects with route callbacks.
 - Acceptance: system message list page opens from message center; notification types and detail navigation match Android.
+- 2026-05-19 P2 AgentTeam result: `SystemMessageView` and supporting header/list/viewmodel/repository files are in commonMain. Home Message tab now passes `SystemMessageEntry` into `AppRoute.SystemMessage`; system notice and classroom assistant types are supported.
 
 ### P2-04 My Focus
 
@@ -212,6 +215,7 @@ If a command is unavailable for the current local setup, record the exact failur
   2. Add `ProfileSubPageKind.Focus` or dedicated route.
   3. Route user click to other-user profile route.
 - Acceptance: following/follower list UI matches Android; unfollow/follow state updates through repository; back behavior matches profile subpages.
+- 2026-05-19 P2 AgentTeam result: `MyFocusView` and follow list components are in commonMain. Added `ProfileSubPageKind.Focus`; Profile follow count opens the page and user row clicks route to `OtherUserProfile`.
 
 ### P2-05 Other User Profile
 
@@ -225,6 +229,7 @@ If a command is unavailable for the current local setup, record the exact failur
   2. Add route `OtherUserProfile(userId)` and self-profile redirect behavior in route bridge.
   3. Replace image preview/post detail navigation with callbacks.
 - Acceptance: other-user header stats, follow button, posts tab, replies tab, image preview, and post detail links behave like Android.
+- 2026-05-19 P2 AgentTeam result: `OtherUserProfileView`/`OtherUserProfile` and posts/replies/header/stats/tab components are in commonMain. `OtherUserProfileActivity.startIfNotSelf` now binds to the app navigation bridge with self-profile redirect.
 
 ### P2-06 Paper Management
 
@@ -238,6 +243,7 @@ If a command is unavailable for the current local setup, record the exact failur
   2. Convert edit action to `AppRoute.PostCreate(editPostId=...)`.
   3. Convert detail action to `AppRoute.PostDetail(postId=...)`.
 - Acceptance: draft/published/rejected filtering and item actions match Android; management page opens from creator/profile entry.
+- 2026-05-19 P2 AgentTeam result: `PaperManagementView`, filter/header/item/viewmodel/repository are in commonMain. Profile and Creator entries open `AppRoute.PaperManagement`; item click opens detail, edit opens `AppRoute.PostCreate(edit...)`, data opens DataCenter.
 
 ### P2-07 Publish Post Shortcut Page
 
@@ -251,6 +257,7 @@ If a command is unavailable for the current local setup, record the exact failur
   2. Otherwise map entry directly to existing `AppRoute.PostCreate`.
   3. Keep visual parity with Android publish entry, including top bar.
 - Acceptance: profile/creator publish entry opens the same Android-equivalent publish UI; no duplicate divergent compose layout.
+- 2026-05-19 P2 AgentTeam result: `PublishPostView` and `PublishPostHeader` are in commonMain, with `PublishPostShortcutView` mapping the shortcut route to the existing `AppRoute.PostCreate()`.
 
 ### P2-08 Teaching Non-RTC My Class
 
@@ -264,6 +271,7 @@ If a command is unavailable for the current local setup, record the exact failur
   2. Add typed routes for MyClass, ClassAssistant, OrderDetail.
   3. Preserve list filters, tabs, status chips, and empty states.
 - Acceptance: my-class one-to-one and school pages compile and navigate without RTC/video code.
+- 2026-05-19 P2 AgentTeam result: `MyClassView`, title/tab bars, one-to-one and school list/filter pages, `ClassAssistantRoute`, and `OrderDetailRoute` are in commonMain. `MyClassActivity.start`, class assistant, and order detail compatibility starts route through `NavigationRouteBridge`; video classroom entry shows a no-op toast.
 
 ### P2-09 Teaching Non-RTC Teacher Profile and Schedule
 
@@ -278,6 +286,7 @@ If a command is unavailable for the current local setup, record the exact failur
   3. Copy class assistant and order detail non-video flows.
   4. Route appointment, cancel, accept/refuse actions through repository and callback events.
 - Acceptance: teacher profile, schedule, pay confirm, order detail, and class assistant non-RTC flows match Android visuals and compile in common code.
+- 2026-05-19 P2 AgentTeam result: Teacher profile, schedule calendar/time list, confirm, pay-confirm, order detail, class assistant, helper models, and non-RTC repository glue are in commonMain. `TeacherProfileActivity.start` and `ScheduleActivity.start` route to typed routes; reservation confirmation and pay confirmation flow into order detail.
 
 ### P2-10 Wallet
 
@@ -292,6 +301,7 @@ If a command is unavailable for the current local setup, record the exact failur
   3. Copy recharge top bar/agreement/pay-channel/list/view but gate actual payment invocation behind future platform payment abstraction.
   4. Add routes for wallet, recharge, transaction detail.
 - Acceptance: balance, transaction list, recharge package selection, agreement row, pay-channel visual selection, and deal detail UI match Android; pay submit may show existing no-op/error toast until payment abstraction exists.
+- 2026-05-19 P2 AgentTeam result: `WalletView`, recharge, deal detail, records/tabs/pagination and related viewmodels/models are in commonMain. Profile wallet opens `AppRoute.Wallet`; recharge opens `PointRecharge`; record click opens `WalletDealDetail`. Pay submit remains a no-op/error toast without third-party SDK.
 
 ## P2 RTC-Excluded Tasks
 
@@ -353,6 +363,11 @@ If a command is unavailable for the current local setup, record the exact failur
 
 - All P0 and P1 tasks compile on iOS.
 - P2 first-phase pages are routeable from existing entries or typed routes.
+- 2026-05-19 verification passed:
+  - `./gradlew :composeApp:compileCommonMainKotlinMetadata --no-configuration-cache`
+  - `./gradlew :composeApp:compileKotlinIosSimulatorArm64 --no-configuration-cache`
+  - `./gradlew :composeApp:iosSimulatorArm64Test --no-configuration-cache`
+  - RTC scan for `Agora|VideoRtc|RtcPlayView|teach/video` in first-phase routes/pages returned no matches.
 - Android candidate UI layout is copied without visual redesign.
 - No first-phase file imports `com.vortexa.ui.page.teach.video` or `RtcPlayView`.
 - No new business behavior is invented for payment or RTC.

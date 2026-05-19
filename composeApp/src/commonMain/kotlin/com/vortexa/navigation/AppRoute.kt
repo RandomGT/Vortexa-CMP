@@ -68,6 +68,74 @@ sealed interface AppRoute {
 
     @Serializable
     data class ProfileSubPage(val kind: ProfileSubPageKind) : AppRoute
+
+    @Serializable
+    data object CreatorCenter : AppRoute
+
+    @Serializable
+    data object DataCenter : AppRoute
+
+    @Serializable
+    data class SystemMessage(
+        val messageType: Int = 0,
+        val markReadDialogId: Long? = null,
+        val markReadMessageId: Long? = null,
+    ) : AppRoute
+
+    @Serializable
+    data class OtherUserProfile(val userId: Long) : AppRoute
+
+    @Serializable
+    data object PaperManagement : AppRoute
+
+    @Serializable
+    data object PublishPostShortcut : AppRoute
+
+    @Serializable
+    data object MyClass : AppRoute
+
+    @Serializable
+    data class TeacherProfile(val teacherId: Long) : AppRoute
+
+    @Serializable
+    data class Schedule(val teacherId: Long) : AppRoute
+
+    @Serializable
+    data class ScheduleConfirm(
+        val teacherId: Long,
+        val reserveDate: String,
+        val reserveHour: String,
+    ) : AppRoute
+
+    @Serializable
+    data class SchedulePayConfirm(
+        val teacherId: Long,
+        val reserveDate: String,
+        val reserveHour: String,
+    ) : AppRoute
+
+    @Serializable
+    data class ClassAssistant(
+        val reserveId: Int,
+        val roleQuery: String = "",
+    ) : AppRoute
+
+    @Serializable
+    data class OrderDetail(val reserveId: Int) : AppRoute
+
+    @Serializable
+    data object Wallet : AppRoute
+
+    @Serializable
+    data object PointRecharge : AppRoute
+
+    @Serializable
+    data class WalletDealDetail(
+        val dealId: String = "",
+        val amount: String = "",
+        val action: String = "",
+        val date: String = "",
+    ) : AppRoute
 }
 
 @Serializable
@@ -75,6 +143,7 @@ enum class ProfileSubPageKind {
     Collection,
     History,
     Interaction,
+    Focus,
 }
 
 internal fun encodeRouteStringList(value: List<String>): String =

@@ -1,6 +1,7 @@
 package com.vortexa.navigation
 
 import android.util.Log
+import com.vortexa.ui.page.creator.CreatorCenterActivity
 import com.vortexa.ui.page.home.HomeActivity
 import com.vortexa.ui.page.login.LoginActivity
 import com.vortexa.ui.page.login.forget.ForgetActivity
@@ -8,9 +9,19 @@ import com.vortexa.ui.page.login.register.RegisterActivity
 import com.vortexa.ui.page.post.create.PostCreateActivity
 import com.vortexa.ui.page.post.detail.PostDetailActivity
 import com.vortexa.ui.page.post.list.HotPostListActivity
+import com.vortexa.ui.page.profile.focus.MyFocusActivity
+import com.vortexa.ui.page.profile.other.OtherUserProfileActivity
+import com.vortexa.ui.page.profile.paper.management.PaperManagementActivity
 import com.vortexa.ui.page.profile.collection.CollectionActivity
 import com.vortexa.ui.page.profile.history.HistoryActivity
 import com.vortexa.ui.page.profile.interaction.InteractionActivity
+import com.vortexa.ui.page.systemmsg.SystemMessageActivity
+import com.vortexa.ui.page.teach.helper.ClassAssistantActivity
+import com.vortexa.ui.page.teach.myclass.MyClassActivity
+import com.vortexa.ui.page.teach.order.one2one.OrderDetailActivity
+import com.vortexa.ui.page.teach.profile.TeacherProfileActivity
+import com.vortexa.ui.page.teach.schedule.ScheduleActivity
+import com.vortexa.ui.page.wallet.WalletActivity
 import com.vortexa.ui.page.search.SearchActivity
 import kotlin.reflect.KClass
 
@@ -78,6 +89,17 @@ object NavigationRouteBridge {
         SearchActivity::class -> AppRoute.Search
         PostCreateActivity::class -> AppRoute.PostCreate()
         HotPostListActivity::class -> AppRoute.HotPostList
+        CreatorCenterActivity::class -> AppRoute.CreatorCenter
+        MyFocusActivity::class -> AppRoute.ProfileSubPage(ProfileSubPageKind.Focus)
+        OtherUserProfileActivity::class -> AppRoute.OtherUserProfile(0L)
+        PaperManagementActivity::class -> AppRoute.PaperManagement
+        SystemMessageActivity::class -> AppRoute.SystemMessage()
+        MyClassActivity::class -> AppRoute.MyClass
+        TeacherProfileActivity::class -> AppRoute.TeacherProfile(0L)
+        ScheduleActivity::class -> AppRoute.Schedule(0L)
+        ClassAssistantActivity::class -> AppRoute.ClassAssistant(0)
+        OrderDetailActivity::class -> AppRoute.OrderDetail(0)
+        WalletActivity::class -> AppRoute.Wallet
         CollectionActivity::class -> AppRoute.ProfileSubPage(ProfileSubPageKind.Collection)
         HistoryActivity::class -> AppRoute.ProfileSubPage(ProfileSubPageKind.History)
         InteractionActivity::class -> AppRoute.ProfileSubPage(ProfileSubPageKind.Interaction)

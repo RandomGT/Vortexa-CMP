@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.vortexa.ui.component.pageStatus.PageStatusView
 import com.vortexa.ui.viewmodel.vortexaViewModel
-import com.vortexa.ui.page.profile.paper.management.PaperManagementActivity
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontMedium
 import com.vortexa.ui.component.AvatarImage
@@ -47,7 +46,6 @@ import com.vortexa.ui.component.LogoutConfirmModal
 import com.vortexa.ui.theme.FontRegular
 import com.vortexa.util.ToastUtil
 import com.vortexa.util.extension.click
-import com.vortexa.util.extension.routeToPage
 import vortexa.composeapp.generated.resources.Res
 import vortexa.composeapp.generated.resources.edit
 import vortexa.composeapp.generated.resources.file_chart
@@ -63,7 +61,14 @@ import vortexa.composeapp.generated.resources.profile_default
  */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun ProfileView(isSelected: Boolean = true) {
+fun ProfileView(
+    isSelected: Boolean = true,
+    onWalletClick: () -> Unit = {},
+    onCourseClick: () -> Unit = {},
+    onCreatorClick: () -> Unit = {},
+    onPaperManagementClick: () -> Unit = {},
+    onFocusClick: () -> Unit = {},
+) {
     var showEditModal by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
     val viewModel = vortexaViewModel { ProfileViewModel() }
@@ -120,7 +125,8 @@ fun ProfileView(isSelected: Boolean = true) {
                         postCount = stats?.postCount ?: 0,
                         likeCount = stats?.likeCount ?: 0,
                         followCount = stats?.followCount ?: 0,
-                        fanCount = stats?.fanCount ?: 0
+                        fanCount = stats?.fanCount ?: 0,
+                        onFollowClick = onFocusClick,
                     )
                 // 功能卡片：我的钱包、我的课程（Figma 746-69789）
                 ProfileCardsRow(
@@ -128,10 +134,10 @@ fun ProfileView(isSelected: Boolean = true) {
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     onWalletClick = {
-                        ToastUtil.show(context, "即将上线，敬请期待")
+                        onWalletClick()
                     },
                     onCourseClick = {
-                        viewModel.jumpToCourse(context)
+                        onCourseClick()
                     }
                 )
                 // 功能入口行：创作中心、互动管理、我的收藏、浏览记录（Figma 746-69802）
@@ -142,7 +148,7 @@ fun ProfileView(isSelected: Boolean = true) {
                         .padding(top = 16.dp),
                     onItemClick = { _, index ->
                         when (index) {
-                            0 -> viewModel.jumpToCreator(context)
+                            0 -> onCreatorClick()
                             1 -> viewModel.jumpToInteraction(context)
                             2 -> viewModel.jumpToCollection(context)
                             3 -> viewModel.jumpToHistory(context)
@@ -156,7 +162,7 @@ fun ProfileView(isSelected: Boolean = true) {
                         .padding(horizontal = 16.dp)
                         .padding(top = 12.dp),
                     onFileChartClick = {
-                        context.routeToPage(PaperManagementActivity::class)
+                        onPaperManagementClick()
                     }
                 )
             }
@@ -280,7 +286,8 @@ fun ProfileStats(
     postCount: Int = 0,
     likeCount: Int = 0,
     followCount: Int = 0,
-    fanCount: Int = 0
+    fanCount: Int = 0,
+    onFollowClick: () -> Unit = {},
 ) {
     Row(
         modifier = modifier,
@@ -289,7 +296,7 @@ fun ProfileStats(
     ) {
         ProfileStatItem(count = postCount, label = "发帖")
         ProfileStatItem(count = likeCount, label = "获赞")
-        ProfileStatItem(count = followCount, label = "关注")
+        ProfileStatItem(count = followCount, label = "关注", onClick = onFollowClick)
         ProfileStatItem(count = fanCount, label = "粉丝")
     }
 }
@@ -298,8 +305,16 @@ fun ProfileStats(
  * 单个统计项：上方数字，下方标签，居中对齐。
  */
 @Composable
-private fun ProfileStatItem(count: Int, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun ProfileStatItem(
+    count: Int,
+    label: String,
+    onClick: (() -> Unit)? = null,
+) {
+    val itemModifier = if (onClick == null) Modifier else Modifier.click(onClick)
+    Column(
+        modifier = itemModifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Text(
             text = count.toString(),
             style = FontMedium(fontSize = 18, color = Colors.black_242424),

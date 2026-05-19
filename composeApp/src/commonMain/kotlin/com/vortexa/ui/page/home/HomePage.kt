@@ -22,6 +22,7 @@ import com.vortexa.ui.viewmodel.vortexaViewModel
 import com.vortexa.ui.component.HomeTabContent
 import com.vortexa.ui.page.home.pager.FavoriteView
 import com.vortexa.ui.page.home.pager.message.MessageView
+import com.vortexa.ui.page.home.pager.message.SystemMessageEntry
 import com.vortexa.ui.page.home.pager.message.MessageViewModel
 import com.vortexa.ui.page.home.pager.profile.ProfileView
 import com.vortexa.ui.page.home.pager.school.SchoolView
@@ -36,7 +37,18 @@ import com.vortexa.ui.theme.BaseTheme
  *  @createTime 2026/1/19
  */
 @Composable
-fun HomePage(initialTab: Int = 0) {
+fun HomePage(
+    initialTab: Int = 0,
+    onOpenSystemMessage: (SystemMessageEntry) -> Unit = {},
+    onOpenMyClass: () -> Unit = {},
+    onOpenWallet: () -> Unit = {},
+    onOpenCreatorCenter: () -> Unit = {},
+    onOpenPaperManagement: () -> Unit = {},
+    onOpenMyFocus: () -> Unit = {},
+    onOpenTeacherProfile: (Long) -> Unit = {},
+    onOpenSchedule: (Long) -> Unit = {},
+    onOpenOtherUserProfile: (Long) -> Unit = {},
+) {
     Log.d("HomePage", "compose start")
     val context = Context()
     val safeInitialTab = initialTab.coerceIn(0, 4)
@@ -81,14 +93,22 @@ fun HomePage(initialTab: Int = 0) {
                         )
                         1 -> MessageView(
                             viewModel = messageViewModel,
-                            isSelected = rememberTabIndex == 1
+                            isSelected = rememberTabIndex == 1,
+                            onSystemMessageClick = onOpenSystemMessage,
                         )
                         2 -> SchoolView()
                         3 -> FavoriteView(
                             id = page,
                             isSelected = rememberTabIndex == 3
                         )
-                        4 -> ProfileView(isSelected = rememberTabIndex == 4)
+                        4 -> ProfileView(
+                            isSelected = rememberTabIndex == 4,
+                            onWalletClick = onOpenWallet,
+                            onCourseClick = onOpenMyClass,
+                            onCreatorClick = onOpenCreatorCenter,
+                            onPaperManagementClick = onOpenPaperManagement,
+                            onFocusClick = onOpenMyFocus,
+                        )
                         else -> {HomeView()}
                     }
                 }
