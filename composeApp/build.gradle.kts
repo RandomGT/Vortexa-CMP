@@ -38,6 +38,7 @@ kotlin {
             implementation(libs.coil.network.ktor3)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.multiplatform.settings.noArg)
+            implementation(libs.richeditor.compose)
         }
         iosMain.dependencies {
             implementation(libs.navigationevent)

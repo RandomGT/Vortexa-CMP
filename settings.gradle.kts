@@ -24,6 +24,8 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
+        maven("https://repo1.maven.org/maven2")
+        maven("https://maven.aliyun.com/repository/public")
         mavenCentral()
     }
 }
