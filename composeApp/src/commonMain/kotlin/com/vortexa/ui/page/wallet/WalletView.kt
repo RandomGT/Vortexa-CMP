@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.vortexa.ui.theme.belowStatusBar
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import kotlinx.coroutines.launch
 
@@ -44,6 +45,7 @@ fun WalletView(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     ) {
         WalletHeader(

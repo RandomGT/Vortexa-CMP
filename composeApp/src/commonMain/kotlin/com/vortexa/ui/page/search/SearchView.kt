@@ -22,6 +22,7 @@ import com.vortexa.ui.page.search.history.HotTopicSection
 import com.vortexa.ui.page.search.history.SearchHistorySection
 import com.vortexa.ui.page.search.history.SearchTutorRecommendSection
 import com.vortexa.ui.page.search.result.SearchResultView
+import com.vortexa.ui.theme.belowStatusBar
 
 /**
  * 搜索页：顶部搜索条 + 下方根据状态展示搜索历史/热搜话题/导师推荐或搜索结果。
@@ -48,6 +49,7 @@ fun SearchView(onBack: () -> Unit = {}) {
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     ) {
         SearchBar(

@@ -5,6 +5,7 @@ import android.net.Uri
 data class PostCreateSelectedMedia(
     val uri: Uri,
     val type: PostCreateMediaType,
+    val isRemote: Boolean = false,
 )
 
 enum class PostCreateMediaType {

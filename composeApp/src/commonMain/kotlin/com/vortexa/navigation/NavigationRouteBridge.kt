@@ -81,6 +81,15 @@ object NavigationRouteBridge {
         return navigate(route)
     }
 
+    fun routeToPage(uriString: String): Boolean {
+        val route = uriString.toAppRouteFromScheme()
+        if (route == null) {
+            Log.w(TAG, "routeToPage ignored: unmapped uri=$uriString")
+            return false
+        }
+        return navigate(route)
+    }
+
     private fun KClass<*>.toAppRoute(): AppRoute? = when (this) {
         LoginActivity::class -> AppRoute.Login
         RegisterActivity::class -> AppRoute.Register
@@ -108,6 +117,90 @@ object NavigationRouteBridge {
             null
         }
         else -> null
+    }
+
+    private fun String.toAppRouteFromScheme(): AppRoute? {
+        val raw = trim()
+        if (!raw.startsWith("vortexa://")) return null
+        val withoutScheme = raw.removePrefix("vortexa://")
+        val routeKey = withoutScheme.substringBefore('?').trim('/')
+        val queryPairs = withoutScheme.substringAfter('?', missingDelimiterValue = "").parseQueryPairs()
+        val query = queryPairs.associate { it.first to it.second }
+        return when (routeKey) {
+            "image/preview" -> {
+                val repeated = queryPairs
+                    .filter { it.first == "url" }
+                    .map { it.second.trim() }
+                    .filter { it.isNotEmpty() }
+                val urls = if (repeated.isNotEmpty()) {
+                    repeated
+                } else {
+                    query["url"]?.trim()?.takeIf { it.isNotEmpty() }?.let(::listOf)
+                        ?: query["urls"]
+                            ?.split(',')
+                            ?.map { it.trim() }
+                            ?.filter { it.isNotEmpty() }
+                        ?: emptyList()
+                }
+                if (urls.isEmpty()) return null
+                AppRoute.ImagePreview(
+                    urlsJson = encodeRouteStringList(urls),
+                    initialIndex = query["index"]?.toIntOrNull() ?: 0,
+                )
+            }
+            "teach/rtc" -> {
+                val channelName = query["channelName"]?.takeIf { it.isNotBlank() }
+                    ?: query["channel"]?.takeIf { it.isNotBlank() }
+                    ?: return null
+                val teacherId = query["teacherId"]?.toLongOrNull()?.takeIf { it > 0L } ?: return null
+                AppRoute.VideoRtc(
+                    channelName = channelName,
+                    teacherId = teacherId,
+                    courseStartMs = query["courseStartMs"]?.toLongOrNull(),
+                    courseEndMs = query["courseEndMs"]?.toLongOrNull(),
+                )
+            }
+            else -> null
+        }
+    }
+
+    private fun String.parseQueryPairs(): List<Pair<String, String>> =
+        split('&')
+            .filter { it.isNotBlank() }
+            .map { part ->
+                val key = part.substringBefore('=').decodeUriComponent()
+                val value = part.substringAfter('=', missingDelimiterValue = "").decodeUriComponent()
+                key to value
+            }
+
+    private fun String.decodeUriComponent(): String {
+        if ('%' !in this && '+' !in this) return this
+        val out = StringBuilder(length)
+        var i = 0
+        while (i < length) {
+            when (val ch = this[i]) {
+                '+' -> {
+                    out.append(' ')
+                    i++
+                }
+                '%' -> {
+                    val hex = substring(i + 1, (i + 3).coerceAtMost(length))
+                    val code = hex.toIntOrNull(16)
+                    if (hex.length == 2 && code != null) {
+                        out.append(code.toChar())
+                        i += 3
+                    } else {
+                        out.append(ch)
+                        i++
+                    }
+                }
+                else -> {
+                    out.append(ch)
+                    i++
+                }
+            }
+        }
+        return out.toString()
     }
 }
 

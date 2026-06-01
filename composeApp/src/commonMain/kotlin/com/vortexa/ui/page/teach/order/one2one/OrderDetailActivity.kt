@@ -76,6 +76,8 @@ fun OrderDetailRoute(
                             ToastUtil.show("无法进入课程，缺少频道信息")
                         } else if (ui.teacherId <= 0L) {
                             ToastUtil.show("无法进入课程，缺少导师信息")
+                        } else if (!ui.canEnterCourseRoom()) {
+                            ToastUtil.show("课程未开始，暂不能进入")
                         } else {
                             onCourseEntryClick(ui)
                         }

@@ -3,6 +3,7 @@ package com.vortexa.ui.page.post.create
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vortexa.model.mediaUrlListToJson
 import com.vortexa.model.mediaUrlListToJsonOrNull
 import com.vortexa.repository.HomeRepository
 import com.vortexa.repository.UserRepository
@@ -119,6 +120,7 @@ class PostCreateViewModel(
      * @param selectedMedia 当前选中媒体（远程 URL 与本地 Uri；图片本地会先上传）
      */
     fun publish(selectedMedia: List<PostCreateSelectedMedia> = emptyList()) {
+        if (_isPublishing.value) return
         val t = _title.value.trim()
         val c = _content.value.trim()
         if (t.isEmpty()) {
@@ -150,7 +152,7 @@ class PostCreateViewModel(
                         module = module,
                         title = t,
                         content = c,
-                        mediaListJson = mediaUrlListToJsonOrNull(mediaUrls)
+                        mediaListJson = mediaUrlListToJson(mediaUrls)
                     )
                         .onSuccess {
                             Log.i(TAG, "updatePost: success")
@@ -189,15 +191,16 @@ class PostCreateViewModel(
     }
 
     /**
-     * 将发布页选中的媒体解析为 URL 列表：已存在的 http(s) 直传；本地图片先上传。
+     * 将发布页选中的媒体解析为 URL 列表：编辑带入的远端媒体原样保留；本地图片先上传。
      * Android 候选第一阶段没有本地视频上传接口；遇到本地视频时明确失败，避免静默假成功。
      */
     private suspend fun resolveMediaUrlsForPublish(
         items: List<PostCreateSelectedMedia>
     ): List<String> = items.mapNotNull { item ->
-        val value = item.uri.toString()
+        val value = item.uri.toString().trim()
+        if (value.isEmpty()) return@mapNotNull null
         val lowerValue = value.lowercase()
-        if (lowerValue.startsWith("http://") || lowerValue.startsWith("https://")) {
+        if (item.isRemote || lowerValue.startsWith("http://") || lowerValue.startsWith("https://")) {
             value
         } else if (item.type == PostCreateMediaType.Image) {
             homeRepository.uploadPostImage(item.uri)

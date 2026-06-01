@@ -1,15 +1,7 @@
 package com.vortexa.ui.page.home.pager.profile
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.util.Log
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,34 +15,25 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
-import com.vortexa.BuildConfig
+import com.vortexa.platform.MediaPicker
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontMedium
 import com.vortexa.ui.theme.FontRegular
 import com.vortexa.util.extension.click
-import java.io.File
+import kotlinx.coroutines.launch
 
 /** 底部 Tab 栏高度，与 EditProfileModal 一致 */
 private const val TAB_BAR_HEIGHT_DP = 50
 
-private const val PENDING_NONE = 0
-private const val PENDING_CAMERA = 1
-private const val PENDING_GALLERY = 2
-
 /**
  * 头像来源选择弹窗：拍照 / 从相册选择。
- * 任一选项点击后先校验并申请权限，通过后再执行对应操作。
+ * 选择结果会写入平台临时文件，并以 Uri 形式回传给编辑资料弹窗预览与上传。
  *
  * @param onDismiss 关闭弹窗
  * @param onAvatarSelected 用户选择图片后回调，传入图片 Uri
@@ -61,104 +44,38 @@ fun AvatarSourceModal(
     onDismiss: () -> Unit,
     onAvatarSelected: (Uri) -> Unit
 ) {
-    val context = Context()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    // 拍照输出用临时文件
-    val photoUri = remember {
-        val cacheDir = context.cacheDir
-        val photoFile = File.createTempFile("avatar_", ".jpg", cacheDir)
-        FileProvider.getUriForFile(
-            context,
-            "${BuildConfig.APPLICATION_ID}.fileprovider",
-            photoFile
-        )
-    }
-
-    var pendingAction by remember { mutableStateOf(PENDING_NONE) }
-    val takePictureLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            Log.d(TAG, "TakePicture success, uri=$photoUri")
-            onAvatarSelected(photoUri)
-            onDismiss()
-        } else {
-            Log.w(TAG, "TakePicture failed or cancelled")
-        }
-    }
-
-    val pickVisualMediaLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        uri?.let {
-            Log.d(TAG, "PickVisualMedia success, uri=$it")
-            onAvatarSelected(it)
-            onDismiss()
-        } ?: Log.d(TAG, "PickVisualMedia cancelled")
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { grantedMap ->
-        val allGranted = grantedMap.values.all { it }
-        if (allGranted && pendingAction != PENDING_NONE) {
-            when (pendingAction) {
-                PENDING_CAMERA -> takePictureLauncher.launch(photoUri)
-                PENDING_GALLERY -> pickVisualMediaLauncher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                )
-                else -> {}
-            }
-            pendingAction = PENDING_NONE
-        } else if (!allGranted) {
-            Log.w(TAG, "Permission denied: $grantedMap")
-            Toast.makeText(context, "需要相应权限才能继续", Toast.LENGTH_SHORT).show()
-            pendingAction = PENDING_NONE
-        }
-    }
-
+    val scope = rememberCoroutineScope()
 
     /**
-     * 拍照：先校验/申请 CAMERA 权限，通过后启动相机
+     * 拍照：由平台层负责权限弹窗与相机控制。
      */
     fun onTakePhotoClick() {
-        when {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED -> {
-                Log.d(TAG, "CAMERA permission granted, launching camera")
-                takePictureLauncher.launch(photoUri)
+        scope.launch {
+            val picked = MediaPicker.takePhoto()
+            if (picked == null) {
+                Log.d(TAG, "Take photo cancelled")
+                return@launch
             }
-            else -> {
-                Log.d(TAG, "Requesting CAMERA permission")
-                pendingAction = PENDING_CAMERA
-                permissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
-            }
+            Log.d(TAG, "Take photo success, uri=${picked.uri}")
+            onAvatarSelected(Uri.parse(picked.uri))
+            onDismiss()
         }
     }
 
     /**
-     * 从相册选择：先校验/申请相册权限，通过后启动图片选择器。
-     * API 33+ 用 READ_MEDIA_IMAGES，以下用 READ_EXTERNAL_STORAGE。
+     * 从相册选择：由平台层负责权限弹窗与图片选择器。
      */
     fun onPickFromGalleryClick() {
-        val galleryPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_IMAGES
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-
-        when {
-            ContextCompat.checkSelfPermission(context, galleryPermission) == PackageManager.PERMISSION_GRANTED -> {
-                Log.d(TAG, "Gallery permission granted, launching picker")
-                pickVisualMediaLauncher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                )
+        scope.launch {
+            val picked = MediaPicker.pickImages(maxCount = 1).firstOrNull()
+            if (picked == null) {
+                Log.d(TAG, "Pick image cancelled")
+                return@launch
             }
-            else -> {
-                Log.d(TAG, "Requesting gallery permission: $galleryPermission")
-                pendingAction = PENDING_GALLERY
-                permissionLauncher.launch(arrayOf(galleryPermission))
-            }
+            Log.d(TAG, "Pick image success, uri=${picked.uri}")
+            onAvatarSelected(Uri.parse(picked.uri))
+            onDismiss()
         }
     }
 

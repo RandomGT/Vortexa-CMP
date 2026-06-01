@@ -43,6 +43,7 @@ import com.vortexa.ui.theme.FontBold
 import com.vortexa.ui.theme.FontMedium
 import com.vortexa.ui.theme.FontRegular
 import com.vortexa.util.formatPostInteractionCount
+import com.vortexa.util.resolveApiMediaUrl
 import vortexa.composeapp.generated.resources.Res
 import vortexa.composeapp.generated.resources.bookmark_line
 import vortexa.composeapp.generated.resources.bookmark_selected
@@ -334,9 +335,7 @@ fun PostImagesGrid(
  * @return 可供 Coil 加载的最终地址；无效时返回 null。
  */
 private fun resolvePostImageModel(rawUrl: String): String? {
-    val trimmed = rawUrl.trim()
-    if (trimmed.isBlank()) return null
-    return trimmed
+    return resolveApiMediaUrl(rawUrl)
 }
 
 /**

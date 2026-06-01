@@ -40,7 +40,6 @@ kotlin {
             implementation(libs.multiplatform.settings.noArg)
         }
         iosMain.dependencies {
-            implementation(libs.navigationevent)
             implementation(libs.ktor.client.darwin)
         }
         commonTest.dependencies {

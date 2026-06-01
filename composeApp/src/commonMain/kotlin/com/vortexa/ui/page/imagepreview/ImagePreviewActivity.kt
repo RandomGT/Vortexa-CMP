@@ -6,6 +6,7 @@ import com.vortexa.navigation.encodeRouteStringList
 
 object ImagePreviewActivity {
     fun start(context: Any?, urls: List<String>, initialIndex: Int = 0) {
+        if (urls.isEmpty()) return
         NavigationRouteBridge.navigate(
             AppRoute.ImagePreview(
                 urlsJson = encodeRouteStringList(urls),

@@ -50,7 +50,7 @@ fun TeacherProfileView(
         viewModel.loadDetail(teacherId)
     }
 
-    BaseTheme(belowStatusBar = false, aboveNavigationBar = true) {
+    BaseTheme(belowStatusBar = true, aboveNavigationBar = true) {
         Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
             Column(
                 modifier = Modifier

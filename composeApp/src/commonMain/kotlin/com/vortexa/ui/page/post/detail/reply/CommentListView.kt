@@ -22,9 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.vortexa.ui.component.ListEndFooter
+import com.vortexa.ui.page.post.detail.PostDetailViewModel
 import com.vortexa.ui.theme.Colors
 import com.vortexa.util.formatPostInteractionCount
 import com.vortexa.ui.theme.FontMedium
+import com.vortexa.ui.viewmodel.vortexaViewModel
 import kotlinx.coroutines.flow.collect
 
 /** 假数据 */
@@ -100,6 +102,7 @@ private fun fakeComments() = listOf(
 @Composable
 fun CommentListView(
     modifier: Modifier = Modifier,
+    viewModel: PostDetailViewModel = vortexaViewModel { PostDetailViewModel() },
     comments: List<Comment> = fakeComments(),
     hasMore: Boolean = false,
     loadingMore: Boolean = false,
@@ -165,7 +168,10 @@ fun CommentListView(
                             thickness = 1.dp
                         )
                     }
-                    CommentItemView(comment = comment)
+                    CommentItemView(
+                        comment = comment,
+                        viewModel = viewModel
+                    )
                 }
 
                 if (loadingMore) {

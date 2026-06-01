@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.vortexa.ui.theme.belowStatusBar
 
 /**
  * 订单确认页主视图（Figma 415-40747）：TopBar + 课程卡片 + 预约详情 + 底部双按钮。
@@ -58,6 +59,7 @@ fun ConfirmView(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     ) {
         ConfirmTopBar(onBackClick = onBackClick)

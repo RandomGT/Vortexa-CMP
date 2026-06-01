@@ -4,6 +4,14 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>AgoraAppId</key>
+	<string>$(AGORA_APP_ID)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>用于视频课堂、拍摄并更新你的个人头像。</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>用于视频课堂中的语音沟通。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>用于从相册选择并更新你的个人头像。</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSExceptionDomains</key>

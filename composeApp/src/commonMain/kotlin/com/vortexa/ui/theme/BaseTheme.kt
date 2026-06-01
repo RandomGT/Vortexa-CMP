@@ -1,11 +1,14 @@
 package com.vortexa.ui.theme
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 
 fun Modifier.belowStatusBar(): Modifier = statusBarsPadding()
 
@@ -21,6 +24,12 @@ fun BaseTheme(
         var modifier: Modifier = Modifier
         if (belowStatusBar) modifier = modifier.statusBarsPadding()
         if (aboveNavigationBar) modifier = modifier.navigationBarsPadding()
-        Box(modifier) { content() }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
+            Box(modifier.fillMaxSize()) { content() }
+        }
     }
 }

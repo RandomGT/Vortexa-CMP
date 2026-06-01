@@ -16,11 +16,13 @@ import com.vortexa.model.WalletPointData
 import com.vortexa.net.ApiClient
 import com.vortexa.net.ApiException
 import com.vortexa.net.ApiResponse
+import com.vortexa.platform.platformReadUploadFile
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
@@ -78,11 +80,39 @@ class UserRepository(
         client.deleteJson("v/api/user/like/comment/$commentId").toLikeCommentData(commentId)
     }
 
-    suspend fun uploadAvatar(uri: Any): Result<String> = Result.success("")
+    suspend fun uploadAvatar(uri: Any): Result<String> = runCatching {
+        val file = platformReadUploadFile(uri.toString())
+            ?: throw IllegalArgumentException("无法读取头像文件")
+        val response = client.postMultipart(
+            path = "v/api/user/avatar",
+            fieldName = "file",
+            fileName = file.fileName,
+            bytes = file.bytes,
+            contentType = file.contentType
+        )
+        val url = (response.data as? JsonObject)?.string("url")
+            ?: (response.data as? JsonPrimitive)?.contentOrNull
+            ?: response.url
+        if (url.isNullOrBlank()) {
+            throw ApiException(-1, "Upload response url is null")
+        }
+        url
+    }
+
     suspend fun updateUserCenter(avatar: String? = null, userName: String? = null): Result<UserCenterUpdateData> =
-        Result.success(UserCenterUpdateData(0, userName ?: "Vortexa", avatar))
+        updateUserCenter(userId = 0, avatar = avatar, userName = userName)
+
     suspend fun updateUserCenter(userId: Long, avatar: String? = null, userName: String? = null): Result<UserCenterUpdateData> =
-        Result.success(UserCenterUpdateData(userId, userName ?: "Vortexa", avatar))
+        runCatching {
+            val response = client.postJson(
+                "v/api/user/center/update",
+                buildJsonObject {
+                    if (!avatar.isNullOrBlank()) put("avatar", avatar)
+                    if (!userName.isNullOrBlank()) put("userName", userName)
+                }
+            )
+            response.toUserCenterUpdateData(userId, userName, avatar)
+        }
     suspend fun updatePost(
         postId: Long,
         module: String,
@@ -138,6 +168,23 @@ private fun ApiResponse.toDeletePostData(): DeletePostData {
             ?: primitive?.takeIf { it.isString }?.content
             ?: message.takeIf { it.isNotBlank() }
             ?: "删除成功"
+    )
+}
+
+private fun ApiResponse.toUserCenterUpdateData(
+    defaultUserId: Long,
+    fallbackUserName: String?,
+    fallbackAvatar: String?,
+): UserCenterUpdateData {
+    val obj = data as? JsonObject
+    return UserCenterUpdateData(
+        userId = obj?.long("userId") ?: obj?.long("id") ?: defaultUserId,
+        userName = obj?.string("userName")
+            ?: obj?.string("nickname")
+            ?: fallbackUserName.orEmpty(),
+        userAvatar = obj?.string("userAvatar")
+            ?: obj?.string("avatar")
+            ?: fallbackAvatar
     )
 }
 

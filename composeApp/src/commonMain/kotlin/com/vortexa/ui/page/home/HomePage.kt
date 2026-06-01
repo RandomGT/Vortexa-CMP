@@ -52,16 +52,11 @@ fun HomePage(
     Log.d("HomePage", "compose start")
     val context = Context()
     val safeInitialTab = initialTab.coerceIn(0, 4)
-    val viewModel = vortexaViewModel { HomeViewModel() }
+    val viewModel = vortexaViewModel { HomeViewModel(safeInitialTab) }
     val messageViewModel = vortexaViewModel { MessageViewModel() }
     val rememberTabIndex by remember { viewModel.currentTab }
     val hasMessageUnread by messageViewModel.hasUnreadDialogs.collectAsState()
-    val pageState = rememberPagerState(initialPage = safeInitialTab, pageCount = { 5 })
-    LaunchedEffect(safeInitialTab) {
-        if (rememberTabIndex != safeInitialTab) {
-            viewModel.onTabClick(safeInitialTab)
-        }
-    }
+    val pageState = rememberPagerState(initialPage = rememberTabIndex.coerceIn(0, 4), pageCount = { 5 })
     LaunchedEffect(rememberTabIndex) {
         Log.d("HomePage", "LaunchedEffect rememberTabIndex=$rememberTabIndex currentPage=${pageState.currentPage}")
         if (pageState.currentPage != rememberTabIndex) {

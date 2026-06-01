@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.vortexa.ui.component.ListEndFooter
 import com.vortexa.ui.component.pageStatus.PageStatus
 import com.vortexa.ui.component.pageStatus.PageStatusView
+import com.vortexa.ui.theme.belowStatusBar
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import kotlinx.coroutines.flow.collect
 
@@ -80,6 +81,7 @@ fun SystemMessageView(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     ) {
         SystemMessageHeader(

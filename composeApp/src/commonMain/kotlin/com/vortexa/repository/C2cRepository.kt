@@ -1,18 +1,22 @@
 package com.vortexa.repository
 
-import com.vortexa.model.TeacherListResponse
+import com.vortexa.model.RtcChannelUserProfile
 import com.vortexa.model.TeacherListItem
+import com.vortexa.model.TeacherListResponse
 import com.vortexa.net.ApiClient
 import com.vortexa.net.ApiException
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.longOrNull
 
 class C2cRepository(
     private val client: ApiClient = ApiClient
 ) {
+    private val userRepository by lazy { UserRepository() }
+
     suspend fun getTeacherList(
         tags: String? = null,
         minPrice: String? = null,
@@ -51,6 +55,27 @@ class C2cRepository(
                 }
             )
         }
+
+    suspend fun getC2cToken(channelName: String): Result<String> = runCatching {
+        val response = client.getJson(
+            "v/api/c2c/token",
+            mapOf("channelName" to channelName)
+        )
+        response.dataString() ?: throw ApiException(-1, "Token 为空")
+    }
+
+    suspend fun getRtcChannelUserProfile(agoraUid: Int): Result<RtcChannelUserProfile> {
+        return userRepository.getUserProfile(agoraUid.toLong()).map { response ->
+            val info = response.userInfo
+            RtcChannelUserProfile(
+                agoraUid = agoraUid,
+                nickName = info.nickname,
+                avatar = info.avatar,
+                role = null,
+                teacherId = info.teacherId
+            )
+        }
+    }
 }
 
 private fun JsonObject.array(key: String): List<kotlinx.serialization.json.JsonElement> =
@@ -70,3 +95,11 @@ private fun JsonObject.long(key: String): Long? =
 
 private fun JsonObject.stringList(key: String): List<String>? =
     (this[key] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }
+
+private fun com.vortexa.net.ApiResponse.dataString(): String? =
+    (data as? JsonPrimitive)?.contentOrNull
+        ?: (data as? JsonObject)?.let {
+            (it["token"] as? JsonPrimitive)?.contentOrNull
+                ?: (it["data"] as? JsonPrimitive)?.contentOrNull
+                ?: (it["value"] as? JsonPrimitive)?.contentOrNull
+        }

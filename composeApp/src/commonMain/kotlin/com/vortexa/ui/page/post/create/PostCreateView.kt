@@ -39,6 +39,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
@@ -64,6 +68,7 @@ import com.vortexa.ui.page.post.detail.PostInlineTopicVisualTransformation
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontRegular
 import com.vortexa.ui.theme.FontSemiBold
+import com.vortexa.ui.theme.belowStatusBar
 import com.vortexa.util.ImagePickValidator
 import com.vortexa.util.ToastUtil
 import kotlinx.coroutines.launch
@@ -103,6 +108,8 @@ fun PostCreateView(
     val selectedMediaList = remember { androidx.compose.runtime.mutableStateListOf<PostCreateSelectedMedia>() }
     val density = LocalDensity.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val contentFocusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
     // 工具条模式无底栏「收起占位」，仅在编辑标题时隐藏，否则保留图/视频等入口
@@ -124,14 +131,22 @@ fun PostCreateView(
             val s = url.trim()
             if (s.isEmpty()) continue
             selectedMediaList.add(
-                PostCreateSelectedMedia(uri = Uri.parse(s), type = PostCreateMediaType.Image)
+                PostCreateSelectedMedia(
+                    uri = Uri.parse(s),
+                    type = PostCreateMediaType.Image,
+                    isRemote = true
+                )
             )
         }
         for (url in args.videoResources) {
             val s = url.trim()
             if (s.isEmpty()) continue
             selectedMediaList.add(
-                PostCreateSelectedMedia(uri = Uri.parse(s), type = PostCreateMediaType.Video)
+                PostCreateSelectedMedia(
+                    uri = Uri.parse(s),
+                    type = PostCreateMediaType.Video,
+                    isRemote = true
+                )
             )
         }
     }
@@ -164,8 +179,22 @@ fun PostCreateView(
         }
         if (isContentFocused && imeVisible) {
             composerState = ComposerState.Keyboard
-        } else if (!imeVisible && composerState == ComposerState.Keyboard) {
+        } else if (!isContentFocused && !imeVisible && composerState == ComposerState.Keyboard) {
             composerState = ComposerState.Collapsed
+        }
+    }
+
+    LaunchedEffect(composerState, isTitleFocused) {
+        when {
+            composerState == ComposerState.Keyboard && !isTitleFocused -> {
+                withFrameNanos { }
+                contentFocusRequester.requestFocus()
+                keyboardController?.show()
+            }
+            composerState == ComposerState.Media -> {
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            }
         }
     }
 
@@ -185,6 +214,7 @@ fun PostCreateView(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
             .imePadding()
     ) {
@@ -281,6 +311,7 @@ fun PostCreateView(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(top = 18.dp, bottom = 10.dp, start = 18.dp, end = 18.dp)
+                                    .focusRequester(contentFocusRequester)
                                     .onFocusChanged { focusState ->
                                         isContentFocused = focusState.isFocused
                                     },
@@ -343,6 +374,10 @@ fun PostCreateView(
                         viewModel.updateContent(it.text)
                     },
                     onComposerStateChange = { state ->
+                        if (state == ComposerState.Media) {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        }
                         composerState = state
                         Log.d(TAG, "PostCreate composer state change: $state")
                     },
@@ -363,6 +398,7 @@ fun PostCreateView(
                                 selectedMediaList = selectedMediaList,
                                 context = context
                             )
+                            composerState = ComposerState.Keyboard
                         }
                     },
                     onPickVideoClick = {
@@ -371,6 +407,7 @@ fun PostCreateView(
                             val picked = MediaPicker.pickVideo()
                             if (picked == null) {
                                 ToastUtil.show(context, "暂不支持上传本地视频")
+                                composerState = ComposerState.Keyboard
                                 return@launch
                             }
                             appendSelectedMedia(
@@ -379,6 +416,7 @@ fun PostCreateView(
                                 selectedMediaList = selectedMediaList,
                                 context = context
                             )
+                            composerState = ComposerState.Keyboard
                         }
                     },
                     onClearPreviewClick = {},
@@ -473,7 +511,7 @@ private fun appendSelectedMedia(
             }
         }
     }
-    selectedMediaList.add(PostCreateSelectedMedia(uri = uri, type = mediaType))
+    selectedMediaList.add(PostCreateSelectedMedia(uri = uri, type = mediaType, isRemote = false))
     Log.d(TAG, "Media selected: uri=$uri, type=$mediaType")
 }
 

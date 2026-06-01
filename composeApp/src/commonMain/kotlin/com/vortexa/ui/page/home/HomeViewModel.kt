@@ -21,8 +21,8 @@ import kotlinx.coroutines.launch
  *  @createTime 2026/1/19
  */
 
-class HomeViewModel : ViewModel() {
-    var currentTab = mutableStateOf(0)
+class HomeViewModel(initialTab: Int = 0) : ViewModel() {
+    var currentTab = mutableStateOf(initialTab.coerceIn(0, 4))
     
     private val _pageStatus = MutableStateFlow(PageStatus.Success)
     val pageStatus = _pageStatus.asStateFlow()

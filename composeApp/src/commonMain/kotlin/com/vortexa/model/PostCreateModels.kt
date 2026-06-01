@@ -44,8 +44,13 @@ data class UpdatePostRequest(
     val mediaList: String? = null
 )
 
+/** 将媒体 URL 列表编码为更新接口 [UpdatePostRequest.mediaList] 使用的 JSON 字符串。 */
+fun mediaUrlListToJson(urls: List<String>): String {
+    return urls.joinToString(prefix = "[", postfix = "]") { "\"${it.replace("\"", "\\\"")}\"" }
+}
+
 /** 将媒体 URL 列表编码为更新接口 [UpdatePostRequest.mediaList] 使用的 JSON 字符串；空列表返回 null。 */
 fun mediaUrlListToJsonOrNull(urls: List<String>): String? {
     if (urls.isEmpty()) return null
-    return urls.joinToString(prefix = "[", postfix = "]") { "\"${it.replace("\"", "\\\"")}\"" }
+    return mediaUrlListToJson(urls)
 }

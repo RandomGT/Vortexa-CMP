@@ -32,9 +32,9 @@ import com.vortexa.ui.theme.FontRegular
 @Composable
 fun CommentItemView(
     comment: Comment,
+    viewModel: PostDetailViewModel = vortexaViewModel { PostDetailViewModel() },
     modifier: Modifier = Modifier
 ) {
-    val viewModel = vortexaViewModel { PostDetailViewModel() }
     val detailData by viewModel.detailData.collectAsState()
     val followLoading by viewModel.followLoading.collectAsState()
     val unfollowLoading by viewModel.unfollowLoading.collectAsState()
@@ -73,7 +73,8 @@ fun CommentItemView(
                 comment.replies.forEach { reply ->
                     ReplyItemView(
                         reply = reply,
-                        rootCommentId = comment.id
+                        rootCommentId = comment.id,
+                        viewModel = viewModel
                     )
                 }
                 if (comment.hasMoreReplies) {

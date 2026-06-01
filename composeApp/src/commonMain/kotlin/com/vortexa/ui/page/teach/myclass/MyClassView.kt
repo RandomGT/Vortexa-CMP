@@ -27,6 +27,7 @@ import com.vortexa.config.UserConfig
 import com.vortexa.ui.component.pageStatus.PageStatusView
 import com.vortexa.ui.page.teach.myclass.one2one.MyClassOneToOnePage
 import com.vortexa.ui.page.teach.myclass.school.MyClassSchoolPage
+import com.vortexa.ui.theme.belowStatusBar
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import kotlinx.coroutines.launch
 
@@ -63,6 +64,7 @@ fun MyClassView(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     ) {
         MyClassTitleBar(onBackClick = onBackClick)

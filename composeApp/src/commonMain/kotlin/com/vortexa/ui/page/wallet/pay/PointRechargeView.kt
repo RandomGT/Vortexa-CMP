@@ -28,6 +28,7 @@ import com.vortexa.ui.component.LoadingButton
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontMedium
 import com.vortexa.ui.theme.FontRegular
+import com.vortexa.ui.theme.belowStatusBar
 import com.vortexa.ui.viewmodel.vortexaViewModel
 
 @Composable
@@ -49,6 +50,7 @@ fun PointRechargeView(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     ) {
         PointRechargeTopBar(onBackClick = onBackClick)
@@ -136,4 +138,3 @@ fun PointRechargeView(
         }
     }
 }
-

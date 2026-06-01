@@ -63,7 +63,6 @@ class ProfileViewModel : ViewModel() {
      */
     fun loadUserCenterInfo() {
         viewModelScope.launch {
-            _pageStatus.value = PageStatus.Loading
             Log.d(TAG, "loadUserCenterInfo: start")
             try {
                 fetchUserCenterInfoAndUpdateUi()

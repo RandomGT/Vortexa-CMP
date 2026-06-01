@@ -7,10 +7,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -50,11 +53,13 @@ fun CreatorCenterHeader(
     modifier: Modifier = Modifier,
 ) {
     val effectiveTags = tags.orEmpty()
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val headerHeight = statusBarTop + 220.dp
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(220.dp),
+            .height(headerHeight),
     ) {
         Image(
             painter = painterResource(Res.drawable.bg_profile),
@@ -62,7 +67,7 @@ fun CreatorCenterHeader(
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp),
+                .height(headerHeight),
         )
 
         Box(
@@ -82,7 +87,7 @@ fun CreatorCenterHeader(
             tint = Color.White,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(18.dp)
+                .padding(start = 18.dp, top = statusBarTop + 18.dp)
                 .size(24.dp)
                 .click(onClickListener = onBackClick),
         )
@@ -92,7 +97,7 @@ fun CreatorCenterHeader(
             style = FontMedium(fontSize = 18, color = Color.White),
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 18.dp),
+                .padding(top = statusBarTop + 18.dp),
         )
 
         Column(

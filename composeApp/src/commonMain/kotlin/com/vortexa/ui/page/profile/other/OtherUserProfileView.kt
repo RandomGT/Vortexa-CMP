@@ -108,7 +108,7 @@ fun OtherUserProfileView(
         if (isSelf) onSelfProfileRequested()
     }
 
-    BaseTheme(belowStatusBar = false, aboveNavigationBar = true) {
+    BaseTheme(belowStatusBar = true, aboveNavigationBar = true) {
         Box(
             modifier = Modifier
                 .fillMaxSize()

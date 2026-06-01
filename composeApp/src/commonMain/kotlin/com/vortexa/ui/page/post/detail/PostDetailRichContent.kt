@@ -31,6 +31,7 @@ import com.vortexa.ui.page.imagepreview.ImagePreviewActivity
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontBold
 import com.vortexa.ui.theme.FontRegular
+import com.vortexa.util.resolveApiMediaUrl
 import com.vortexa.util.openUrlInExternalBrowser
 import vortexa.composeapp.generated.resources.Res
 import vortexa.composeapp.generated.resources.default_pic
@@ -67,11 +68,12 @@ fun PostDetailRichContent(
                         }
                     }
                     is PostContentBlock.Image -> {
+                        val imageUrl = resolveApiMediaUrl(block.url)
                         val ratio = if (block.width != null && block.height != null && block.height!! > 0) {
                             block.width!!.toFloat() / block.height!!.toFloat()
                         } else null
                         AsyncImage(
-                            model = block.url,
+                            model = imageUrl,
                             contentDescription = "正文图片",
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -82,7 +84,7 @@ fun PostDetailRichContent(
                                     interactionSource = MutableInteractionSource(),
                                     indication = null,
                                 ) {
-                                    ImagePreviewActivity.start(context, listOf(block.url), 0)
+                                    ImagePreviewActivity.start(context, listOfNotNull(imageUrl), 0)
                                 }
                                 .then(
                                     if (ratio != null) Modifier.aspectRatio(ratio)
@@ -108,7 +110,7 @@ fun PostDetailRichContent(
                                 ) { context.openUrlInExternalBrowser(block.url) },
                             contentAlignment = Alignment.Center,
                         ) {
-                            val coverUrl = block.cover?.takeIf { it.isNotBlank() }
+                            val coverUrl = resolveApiMediaUrl(block.cover)
                             if (coverUrl != null) {
                                 AsyncImage(
                                     model = coverUrl,

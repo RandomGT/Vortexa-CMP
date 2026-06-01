@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontRegular
 import com.vortexa.ui.theme.FontSemiBold
+import com.vortexa.ui.theme.belowStatusBar
 
 private const val TITLE_MAX_LENGTH = 30
 
@@ -52,6 +53,7 @@ fun PublishPostView(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
             .verticalScroll(scrollState)
     ) {
@@ -153,6 +155,7 @@ fun PublishPostShortcutView(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     )
 }

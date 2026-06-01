@@ -100,8 +100,6 @@ class RecommendViewModel : ViewModel() {
             }
             if (showRefreshing) {
                 _isRefreshing.value = true
-            } else {
-                _pageStatus.value = PageStatus.Loading
             }
             Log.i("RecommendViewModel", "refresh start, showRefreshing=$showRefreshing")
             var postsOk = false

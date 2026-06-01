@@ -124,6 +124,14 @@ sealed interface AppRoute {
     data class OrderDetail(val reserveId: Int) : AppRoute
 
     @Serializable
+    data class VideoRtc(
+        val channelName: String,
+        val teacherId: Long,
+        val courseStartMs: Long? = null,
+        val courseEndMs: Long? = null,
+    ) : AppRoute
+
+    @Serializable
     data object Wallet : AppRoute
 
     @Serializable

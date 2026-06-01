@@ -1,5 +1,8 @@
 package com.vortexa.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -9,8 +12,9 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.vortexa.config.TokenConfig
 import com.vortexa.ui.page.creator.CreatorCenterPage
 import com.vortexa.ui.page.creator.statistics.DataCenterPage
@@ -19,6 +23,7 @@ import com.vortexa.ui.page.home.HomePage
 import com.vortexa.ui.page.login.LoginScreen
 import com.vortexa.ui.page.login.forget.ForgetView
 import com.vortexa.ui.page.login.register.RegisterPage
+import com.vortexa.ui.page.imagepreview.ImagePreviewView
 import com.vortexa.ui.page.post.create.PostCreateEditArgs
 import com.vortexa.ui.page.post.create.PostCreateView
 import com.vortexa.ui.page.post.detail.PostDetailReplyComposerHint
@@ -45,6 +50,7 @@ import com.vortexa.ui.page.teach.schedule.ScheduleView
 import com.vortexa.ui.page.teach.schedule.confirm.ConfirmView
 import com.vortexa.ui.page.teach.schedule.confirm2.Confirm2ViewModel
 import com.vortexa.ui.page.teach.schedule.confirm2.PayConfirmView
+import com.vortexa.ui.page.teach.video.VideoRtcRoute
 import com.vortexa.ui.page.wallet.WalletRecord
 import com.vortexa.ui.page.wallet.WalletRecordType
 import com.vortexa.ui.page.wallet.DealDetailState
@@ -52,14 +58,13 @@ import com.vortexa.ui.page.wallet.defaultDetailRows
 import com.vortexa.ui.page.wallet.WalletView
 import com.vortexa.ui.page.wallet.detail.DealDetailView
 import com.vortexa.ui.page.wallet.pay.PointRechargeView
-import com.vortexa.ui.shell.ImagePreviewShell
+import com.vortexa.ui.theme.belowStatusBar
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import com.vortexa.util.ToastUtil
 
 @Composable
 fun VortexaRoot() {
     val navController = rememberNavController()
-    val currentBackStackEntry = navController.currentBackStackEntryAsState()
 
     val dispatcher = remember(navController) {
         object : NavigationDispatcher {
@@ -92,12 +97,15 @@ fun VortexaRoot() {
         onDispose { OtherUserProfileActivity.clearNavigationCallbacks(token) }
     }
 
-    WideBackGestureLayer(
-        enabled = currentBackStackEntry.value != null && navController.previousBackStackEntry != null,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
     ) {
         NavHost(
             navController = navController,
             startDestination = NavRoutes.Splash,
+            modifier = Modifier.fillMaxSize(),
         ) {
             composable(NavRoutes.Splash) {
                 SplashPage(onSplashFinish = {
@@ -150,7 +158,14 @@ fun VortexaRoot() {
             }
             composable(NavRoutes.Search) { SearchView(onBack = dispatcher::back) }
             composable(NavRoutes.SearchResult) {
-                SearchResultView(keyword = NavigationPayloadStore.searchKeyword)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .belowStatusBar()
+                        .background(Color.White)
+                ) {
+                    SearchResultView(keyword = NavigationPayloadStore.searchKeyword)
+                }
             }
             composable(NavRoutes.CreatorCenter) {
                 CreatorCenterPage(
@@ -172,6 +187,7 @@ fun VortexaRoot() {
                     markReadDialogId = NavigationPayloadStore.systemMessageMarkReadDialogId,
                     markReadMessageId = NavigationPayloadStore.systemMessageMarkReadMessageId,
                     onBackClick = dispatcher::back,
+                    onOpenScheme = { scheme -> NavigationRouteBridge.routeToPage(scheme) },
                 )
             }
             composable(NavRoutes.PostDetail) {
@@ -332,13 +348,31 @@ fun VortexaRoot() {
                     onBackClick = dispatcher::back,
                     onTeacherProfileClick = { teacherId -> dispatcher.navigate(AppRoute.TeacherProfile(teacherId)) },
                     onRebookClick = { teacherId -> dispatcher.navigate(AppRoute.Schedule(teacherId)) },
-                    onCourseEntryClick = { ToastUtil.show("视频课堂暂未接入") },
+                    onCourseEntryClick = { ui ->
+                        dispatcher.navigate(
+                            AppRoute.VideoRtc(
+                                channelName = ui.channelName.orEmpty(),
+                                teacherId = ui.teacherId,
+                                courseStartMs = ui.courseStartEpochMilli(),
+                                courseEndMs = ui.courseEndEpochMilli(),
+                            )
+                        )
+                    },
                     onClosedAfterCancel = dispatcher::back,
                 )
             }
+            composable(NavRoutes.VideoRtc) {
+                VideoRtcRoute(
+                    channelName = NavigationPayloadStore.videoRtcChannelName,
+                    courseTeacherId = NavigationPayloadStore.videoRtcTeacherId,
+                    courseStartTimeMs = NavigationPayloadStore.videoRtcCourseStartMs,
+                    courseEndTimeMs = NavigationPayloadStore.videoRtcCourseEndMs,
+                    onClose = dispatcher::back,
+                )
+            }
             composable(NavRoutes.ImagePreview) {
-                ImagePreviewShell(
-                    urls = NavigationPayloadStore.imagePreviewUrls,
+                ImagePreviewView(
+                    imageUrls = NavigationPayloadStore.imagePreviewUrls,
                     initialIndex = NavigationPayloadStore.imagePreviewInitialIndex,
                     onBack = dispatcher::back,
                 )
@@ -472,6 +506,7 @@ private object NavRoutes {
     const val SchedulePayConfirm = "schedulePayConfirm"
     const val ClassAssistant = "classAssistant"
     const val OrderDetail = "orderDetail"
+    const val VideoRtc = "videoRtc"
     const val Wallet = "wallet"
     const val PointRecharge = "pointRecharge"
     const val WalletDealDetail = "walletDealDetail"
@@ -502,6 +537,10 @@ private object NavigationPayloadStore {
     var classAssistantReserveId: Int = 0
     var classAssistantRoleQuery: String = ""
     var orderDetailReserveId: Int = 0
+    var videoRtcChannelName: String = ""
+    var videoRtcTeacherId: Long = 0L
+    var videoRtcCourseStartMs: Long? = null
+    var videoRtcCourseEndMs: Long? = null
     var walletDealDetailState: DealDetailState = DealDetailState()
 }
 
@@ -598,6 +637,13 @@ private fun AppRoute.toNavRoute(): String = when (this) {
     is AppRoute.OrderDetail -> {
         NavigationPayloadStore.orderDetailReserveId = reserveId
         NavRoutes.OrderDetail
+    }
+    is AppRoute.VideoRtc -> {
+        NavigationPayloadStore.videoRtcChannelName = channelName
+        NavigationPayloadStore.videoRtcTeacherId = teacherId
+        NavigationPayloadStore.videoRtcCourseStartMs = courseStartMs
+        NavigationPayloadStore.videoRtcCourseEndMs = courseEndMs
+        NavRoutes.VideoRtc
     }
     AppRoute.Wallet -> NavRoutes.Wallet
     AppRoute.PointRecharge -> NavRoutes.PointRecharge

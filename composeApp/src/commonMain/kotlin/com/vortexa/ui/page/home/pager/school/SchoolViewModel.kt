@@ -92,8 +92,6 @@ class SchoolViewModel : ViewModel() {
             }
             if (showRefreshing) {
                 _isRefreshing.value = true
-            } else {
-                _pageStatus.value = PageStatus.Loading
             }
             Log.i(TAG, "refresh start, showRefreshing=$showRefreshing")
             var mentorOk = false

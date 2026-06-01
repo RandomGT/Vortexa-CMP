@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -25,6 +25,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,13 +42,18 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -53,13 +61,14 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.vortexa.ui.component.LoadingButton
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontMedium
 import com.vortexa.util.extension.click
-import com.vortexa.util.pxToDp
 import org.jetbrains.compose.resources.painterResource
 import vortexa.composeapp.generated.resources.Res
+import vortexa.composeapp.generated.resources.default_pic
 import vortexa.composeapp.generated.resources.icon_close
 import vortexa.composeapp.generated.resources.icon_emoji
 import vortexa.composeapp.generated.resources.icon_img
@@ -86,32 +95,32 @@ fun PostDetailBottomBar(
     showReplyComposer: Boolean = true,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val inputFocusRequester = remember { FocusRequester() }
     val density = LocalDensity.current
     val imeBottomPx = WindowInsets.ime.getBottom(density)
+    val navigationBottomPx = WindowInsets.navigationBars.getBottom(density)
     var keyboardHeightPx by rememberSaveable { mutableIntStateOf(0) }
     var prevImePx by remember { mutableIntStateOf(0) }
     val isComposerExpanded = composerState != ComposerState.Collapsed
-    val isEmojiPanelVisible = composerState == ComposerState.Emoji
+    val isKeyboardSlotReserved =
+        composerState == ComposerState.Emoji || composerState == ComposerState.KeyboardPending
+    val showEmojiPanelContent = composerState == ComposerState.Emoji
     val context = LocalContext.current
-    val screenWidth =
-        pxToDp(LocalContext.current.resources.displayMetrics.widthPixels.toFloat(), context).dp
-    val animatedWidth by animateDpAsState(
-        targetValue = if (!isComposerExpanded) {
-            (screenWidth - 184.dp - 18.dp)
-        } else {
-            (screenWidth - 28.dp)
-        },
-        label = "animatedWidth",
-    )
-    val emojiPanelHeight: Dp = if (keyboardHeightPx > 0) {
-        with(density) { keyboardHeightPx.toDp() }
+    val keyboardSlotHeight: Dp = if (keyboardHeightPx > 0) {
+        with(density) { (keyboardHeightPx - navigationBottomPx).coerceAtLeast(0).toDp() }
+            .takeIf { it > 0.dp }
+            ?: DEFAULT_EMOJI_PANEL_HEIGHT
     } else {
         DEFAULT_EMOJI_PANEL_HEIGHT
     }
 
     val onEmojiToggleClick: () -> Unit = {
-        val next =
-            if (composerState == ComposerState.Emoji) ComposerState.Keyboard else ComposerState.Emoji
+        val next = when (composerState) {
+            ComposerState.Emoji -> ComposerState.KeyboardPending
+            ComposerState.KeyboardPending -> ComposerState.Emoji
+            else -> ComposerState.Emoji
+        }
         onComposerStateChange(next)
         if (next == ComposerState.Emoji) {
             keyboardController?.hide()
@@ -120,24 +129,54 @@ fun PostDetailBottomBar(
         }
     }
 
-    LaunchedEffect(imeBottomPx) {
-        if (showReplyComposer && imeBottomPx > 0 && prevImePx == 0) {
-            onComposerStateChange(ComposerState.Keyboard)
+    LaunchedEffect(imeBottomPx, composerState) {
+        if (showReplyComposer && imeBottomPx > 0) {
+            when (composerState) {
+                ComposerState.Keyboard -> {
+                    if (keyboardHeightPx == 0 || imeBottomPx >= prevImePx) {
+                        keyboardHeightPx = imeBottomPx
+                    }
+                }
+                ComposerState.KeyboardPending -> Unit
+                ComposerState.Collapsed,
+                ComposerState.Media -> {
+                    if (prevImePx == 0) {
+                        onComposerStateChange(ComposerState.Keyboard)
+                    }
+                }
+                ComposerState.Emoji -> Unit
+            }
         }
         prevImePx = imeBottomPx
     }
 
-    LaunchedEffect(imeBottomPx, composerState) {
-        if (showReplyComposer && imeBottomPx > 0 && composerState == ComposerState.Keyboard) {
-            keyboardHeightPx = imeBottomPx
-        }
-    }
-
     LaunchedEffect(composerState) {
         when {
-            showReplyComposer && composerState == ComposerState.Keyboard -> keyboardController?.show()
-            showReplyComposer && composerState != ComposerState.Keyboard -> keyboardController?.hide()
-            !showReplyComposer && composerState == ComposerState.Media -> keyboardController?.hide()
+            showReplyComposer && composerState == ComposerState.Keyboard -> {
+                withFrameNanos { }
+                inputFocusRequester.requestFocus()
+                keyboardController?.show()
+            }
+            showReplyComposer && composerState == ComposerState.KeyboardPending -> {
+                withFrameNanos { }
+                inputFocusRequester.requestFocus()
+                keyboardController?.show()
+            }
+            showReplyComposer && composerState == ComposerState.Emoji -> {
+                keyboardController?.hide()
+            }
+            showReplyComposer && composerState == ComposerState.Collapsed -> {
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            }
+            showReplyComposer && composerState == ComposerState.Media -> {
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            }
+            !showReplyComposer && composerState == ComposerState.Media -> {
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            }
         }
     }
 
@@ -146,13 +185,20 @@ fun PostDetailBottomBar(
             .fillMaxWidth()
             .background(Color.White)
             .then(
+                if (composerState == ComposerState.Keyboard) {
+                    Modifier.imePadding()
+                } else {
+                    Modifier.navigationBarsPadding()
+                }
+            )
+            .then(
                 when {
                     !showReplyComposer -> Modifier.heightIn(min = 60.dp)
                     isComposerExpanded -> Modifier.heightIn(min = 102.dp)
                     else -> Modifier.height(48.dp)
                 }
             )
-            .padding(horizontal = 18.dp, vertical = 8.dp)
+            .padding(start = 18.dp, top = 8.dp, end = 18.dp, bottom = 8.dp)
             .then(
                 if (showReplyComposer && composerState == ComposerState.Collapsed) {
                     Modifier.clickable(
@@ -191,7 +237,13 @@ fun PostDetailBottomBar(
             ) {
                 Box(
                     modifier = Modifier
-                        .width(animatedWidth)
+                        .then(
+                            if (isComposerExpanded) {
+                                Modifier.fillMaxWidth()
+                            } else {
+                                Modifier.weight(1f)
+                            }
+                        )
                         .heightIn(min = 40.dp, max = 72.dp)
                         .background(Colors.gray_F3F5F7, RoundedCornerShape(20.dp))
                         .padding(horizontal = 16.dp),
@@ -203,6 +255,7 @@ fun PostDetailBottomBar(
                             onValueChange = onValueChange,
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
+                                .focusRequester(inputFocusRequester)
                                 .fillMaxWidth(),
                             textStyle = TextStyle(
                                 color = Colors.black_101828,
@@ -236,7 +289,7 @@ fun PostDetailBottomBar(
 
                 if (!isComposerExpanded) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Image(
                             painter = painterResource(Res.drawable.icon_emoji),
                             contentDescription = "Emoji",
@@ -244,10 +297,10 @@ fun PostDetailBottomBar(
                                 .size(24.dp)
                                 .click { onEmojiToggleClick() },
                         )
-                        Spacer(modifier = Modifier.width(36.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Box(
                             modifier = Modifier
-                                .size(90.dp, 32.dp)
+                                .size(64.dp, 32.dp)
                                 .background(
                                     color = Colors.black_101828,
                                     shape = RoundedCornerShape(16.dp),
@@ -323,24 +376,28 @@ fun PostDetailBottomBar(
         }
 
         AnimatedVisibility(
-            visible = isEmojiPanelVisible,
+            visible = isKeyboardSlotReserved,
             enter = fadeIn(),
-            exit = fadeOut(),
+            exit = ExitTransition.None,
         ) {
-            PostDetailEmojiPanel(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(emojiPanelHeight),
-                onEmojiClick = { emoji ->
-                    val text = inputValue.text
-                    val sel = inputValue.selection
-                    val insertStart = sel.min
-                    val insertEnd = sel.max
-                    val newText = text.take(insertStart) + emoji + text.drop(insertEnd)
-                    val cursorAfter = insertStart + emoji.length
-                    onValueChange(TextFieldValue(newText, TextRange(cursorAfter)))
-                },
-            )
+            if (showEmojiPanelContent) {
+                PostDetailEmojiPanel(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(keyboardSlotHeight),
+                    onEmojiClick = { emoji ->
+                        val text = inputValue.text
+                        val sel = inputValue.selection
+                        val insertStart = sel.min
+                        val insertEnd = sel.max
+                        val newText = text.take(insertStart) + emoji + text.drop(insertEnd)
+                        val cursorAfter = insertStart + emoji.length
+                        onValueChange(TextFieldValue(newText, TextRange(cursorAfter)))
+                    },
+                )
+            } else {
+                Spacer(modifier = Modifier.height(keyboardSlotHeight))
+            }
         }
     }
 }
@@ -353,6 +410,7 @@ private fun MediaPreviewItem(
     onRemove: () -> Unit,
 ) {
     val previewShape = RoundedCornerShape(MEDIA_PREVIEW_CORNER_RADIUS)
+    val placeholder = painterResource(Res.drawable.default_pic)
     Box(modifier = Modifier.size(MEDIA_PREVIEW_ITEM_SIZE)) {
         Box(
             modifier = Modifier
@@ -361,11 +419,29 @@ private fun MediaPreviewItem(
                 .background(Colors.gray_F3F5F7),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = if (isVideo) "VIDEO" else "IMG",
-                color = Colors.gray_B1B8C6,
-                fontSize = 12.sp,
+            AsyncImage(
+                model = uri.toString(),
+                contentDescription = null,
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop,
+                placeholder = placeholder,
+                error = placeholder,
+                fallback = placeholder,
             )
+            if (isVideo) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color.Black.copy(alpha = 0.28f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "VIDEO",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                    )
+                }
+            }
         }
         Box(
             modifier = Modifier
@@ -378,4 +454,3 @@ private fun MediaPreviewItem(
         }
     }
 }
-

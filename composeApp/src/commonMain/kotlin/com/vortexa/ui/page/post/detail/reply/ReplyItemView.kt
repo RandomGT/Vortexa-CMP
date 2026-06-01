@@ -64,10 +64,10 @@ import vortexa.composeapp.generated.resources.profile_default
 fun ReplyItemView(
     reply: Reply,
     rootCommentId: String,
+    viewModel: PostDetailViewModel = vortexaViewModel { PostDetailViewModel() },
     modifier: Modifier = Modifier
 ) {
     val context = android.content.Context()
-    val viewModel = vortexaViewModel { PostDetailViewModel() }
     val detailData by viewModel.detailData.collectAsState()
     val followLoading by viewModel.followLoading.collectAsState()
     val unfollowLoading by viewModel.unfollowLoading.collectAsState()

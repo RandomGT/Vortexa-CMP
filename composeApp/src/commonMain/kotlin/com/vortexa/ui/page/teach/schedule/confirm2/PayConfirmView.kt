@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.vortexa.ui.page.teach.schedule.confirm.ConfirmCourseCard
+import com.vortexa.ui.theme.belowStatusBar
 
 /**
  * 支付确认页主视图（Figma 422-36569）：TopBar + 课程卡片 + 预约详情 + 底部「返回」「确认支付」；确认支付为 LoadingButton，请求中显示 loading。一期不展示优惠券。
@@ -42,6 +43,7 @@ fun PayConfirmView(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     ) {
         PayConfirmTopBar(onBackClick = onBackClick)

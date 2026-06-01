@@ -11,6 +11,7 @@ import com.vortexa.ui.page.wallet.DealDetailViewModel
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.vortexa.ui.theme.belowStatusBar
 
 @Composable
 fun DealDetailView(
@@ -44,6 +45,7 @@ private fun DealDetailContent(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     ) {
         DealDetailToolbar(onBackClick = onBackClick)
@@ -60,4 +62,3 @@ private fun DealDetailContent(
         )
     }
 }
-

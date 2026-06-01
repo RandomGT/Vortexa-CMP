@@ -15,7 +15,11 @@ fun CreatorCenterPage(
     onInteractionClick: () -> Unit,
     onPaperManagementClick: () -> Unit,
 ) {
-    BaseTheme(belowStatusBar = false, aboveNavigationBar = true) {
+    BaseTheme(
+        statusBarTextDark = false,
+        belowStatusBar = false,
+        aboveNavigationBar = true,
+    ) {
         CreatorCenterView(
             onBackClick = onBackClick,
             onDataCenterClick = onDataCenterClick,

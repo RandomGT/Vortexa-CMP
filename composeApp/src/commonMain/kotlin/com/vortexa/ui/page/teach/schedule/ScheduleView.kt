@@ -25,6 +25,7 @@ import com.vortexa.ui.component.pageStatus.PageStatusView
 import com.vortexa.ui.page.teach.helper.TeachingDate
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import com.vortexa.ui.theme.Colors
+import com.vortexa.ui.theme.belowStatusBar
 
 /**
  * 日程页：上为日历模块，下为「选择时间」时间槽列表。
@@ -52,6 +53,7 @@ fun ScheduleView(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .belowStatusBar()
             .background(Color.White)
     ) {
         ScheduleCalendarSection(

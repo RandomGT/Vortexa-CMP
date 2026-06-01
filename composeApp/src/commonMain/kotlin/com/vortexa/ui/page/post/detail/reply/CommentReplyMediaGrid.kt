@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontRegular
+import com.vortexa.util.resolveApiMediaUrl
 import com.vortexa.util.toImagePreviewUrls
 import vortexa.composeapp.generated.resources.Res
 import vortexa.composeapp.generated.resources.default_pic
@@ -122,10 +123,7 @@ fun CommentReplyMediaGrid(
  * 解析评论/回复媒体 URL，兼容绝对路径与相对路径。
  */
 private fun resolveCommentMediaUrl(rawUrl: String): String? {
-    val trimmed = rawUrl.trim()
-    if (trimmed.isBlank()) return null
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed
-    return trimmed
+    return resolveApiMediaUrl(rawUrl)
 }
 
 @Composable
