@@ -19,12 +19,17 @@ import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontBold
 import com.vortexa.ui.theme.FontRegular
 
+/** 与接口约定：contentFormat 为 `HTML`（不区分大小写）时，正文 [PostDetailData.content] 为 HTML。 */
+private fun isPostContentHtmlFormat(contentFormat: String?): Boolean =
+    contentFormat?.equals("HTML", ignoreCase = true) == true
+
 /** 帖子详情主体展示所需字段（Figma 747-88771） */
 private data class PostDetailBodyData(
     val topicTag: String,
     val title: String,
     val publishTime: String,
     val content: String,
+    val contentFormat: String?,
     val images: List<Any>,
     val inlineTags: List<String>,
     val disclaimer: String?,
@@ -36,6 +41,7 @@ private fun fakeBodyData() = PostDetailBodyData(
     title = "大学生勇闯币圈!!励志做到 100wU 第257天",
     publishTime = "2026.01.01 19:30:23",
     content = "昨天开了一单空单一路补仓补到平均98600成本!终于等到一根大阴线收米,睡醒看见后半夜还有两根大阴线直呼后悔不过合约着东西还是慢慢来!睡觉行情不好把握也没得后悔,小富即安。最近感觉BA手续费好高懒得弄返利小号,准备转个2000U去BG赚点返利收益大家感觉如何",
+    contentFormat = null,
     images = emptyList(),
     inlineTags = listOf("#比特币", "#我的理财日记", "#web3", "#金融理财", "#区块链", "#投资理财", "#交易员"),
     disclaimer = "(纯分享交易日记非引流!引流号不要 找我)",
@@ -57,6 +63,7 @@ fun PostDetailBody(
             title = it.title,
             publishTime = it.publishTime,
             content = it.content,
+            contentFormat = it.contentFormat,
             images = it.post.images,
             inlineTags = it.inlineTags,
             disclaimer = it.disclaimer,
@@ -91,7 +98,17 @@ fun PostDetailBody(
         )
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (richBlocks != null) {
+        if (isPostContentHtmlFormat(displayData.contentFormat) && displayData.content.isNotBlank()) {
+            PostDetailHtmlContent(html = displayData.content)
+            val tail = buildPostTailAnnotatedString(displayData.inlineTags, displayData.disclaimer)
+            if (tail.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                ClickableLinkText(
+                    text = tail,
+                    style = bodyTextStyle,
+                )
+            }
+        } else if (richBlocks != null) {
             PostDetailRichContent(blocks = richBlocks)
             val tail = buildPostTailAnnotatedString(displayData.inlineTags, displayData.disclaimer)
             if (tail.isNotEmpty()) {

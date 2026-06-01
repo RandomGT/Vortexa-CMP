@@ -32,6 +32,7 @@ data class AuthorInfo(
  * @param postId 贴文 ID
  * @param title 标题
  * @param content 正文
+ * @param contentFormat 正文格式，如 "HTML" 时 [content] 为 HTML 片段，按 HTML 解析展示
  * @param module 分区/板块（接口可能返回 module，与发帖时 body.module 对应）
  * @param board 分区展示名（部分接口用 board；详情展示优先 module）
  * @param likeCount 点赞数
@@ -47,6 +48,7 @@ data class PostInfo(
     val postId: Long,
     val title: String?,
     val content: String?,
+    val contentFormat: String? = null,
     val module: String? = null,
     val board: String?,
     val likeCount: Int,

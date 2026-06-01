@@ -433,6 +433,7 @@ private fun mergeWithEditPayload(
     return base.copy(
         title = editPayload.title,
         content = editPayload.content,
+        contentFormat = null,
         post = base.post.copy(
             id = if (base.post.id.isNotBlank()) base.post.id else postId,
             title = editPayload.title,

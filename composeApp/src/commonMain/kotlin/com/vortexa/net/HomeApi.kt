@@ -292,7 +292,18 @@ private fun JsonObject.toPostDetailResponse(): PostDetailResponse = PostDetailRe
     authorInfo = (this["authorInfo"] as? JsonObject)?.toAuthorInfo()
         ?: AuthorInfo(0L, null, "", false),
     postInfo = (this["postInfo"] as? JsonObject)?.toPostInfo()
-        ?: PostInfo(0L, null, null, null, null, 0, 0, 0, false, false, null)
+        ?: PostInfo(
+            postId = 0L,
+            title = null,
+            content = null,
+            board = null,
+            likeCount = 0,
+            collectCount = 0,
+            replyCount = 0,
+            isLiked = false,
+            isCollect = false,
+            publishTime = null,
+        )
 )
 
 private fun JsonObject.toAuthorInfo(): AuthorInfo = AuthorInfo(
@@ -306,6 +317,7 @@ private fun JsonObject.toPostInfo(): PostInfo = PostInfo(
     postId = long("postId") ?: long("id") ?: 0L,
     title = stringValue("title"),
     content = stringValue("content") ?: stringValue("summary"),
+    contentFormat = stringValue("contentFormat"),
     module = stringValue("module"),
     board = stringValue("board"),
     likeCount = int("likeCount") ?: 0,
