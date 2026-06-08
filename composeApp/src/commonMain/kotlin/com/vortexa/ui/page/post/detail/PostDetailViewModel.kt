@@ -13,6 +13,7 @@ import com.vortexa.ui.page.post.detail.reply.ReplyTarget
 import com.vortexa.repository.HomeRepository
 import com.vortexa.repository.UserRepository
 import com.vortexa.ui.component.pageStatus.PageStatus
+import com.vortexa.util.extractMediaUrlsFromContent
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
@@ -389,7 +390,7 @@ class PostDetailViewModel(
         userId = item.userId,
         isAuthor = resolveIsPostAuthor(item.isAuthor, item.userId, postAuthorId),
         content = item.content,
-        images = item.mediaList.orEmpty().filter { it.isNotBlank() },
+        images = mergeMediaUrls(item.mediaList, item.content),
         likeCount = item.likeCount,
         time = item.publishTime,
         isLiked = item.isLiked,
@@ -418,7 +419,7 @@ class PostDetailViewModel(
             else -> userIdToName[id] ?: "用户"
         },
         content = item.content,
-        images = item.mediaList.orEmpty().filter { it.isNotBlank() },
+        images = mergeMediaUrls(item.mediaList, item.content),
         likeCount = item.likeCount,
         isLiked = item.isLiked,
         time = item.publishTime
@@ -748,6 +749,7 @@ class PostDetailViewModel(
         val author = response.authorInfo
         val info = response.postInfo
         val topicSection = info.module?.takeIf { it.isNotBlank() } ?: info.board?.takeIf { it.isNotBlank() }
+        val mediaUrls = mergeMediaUrls(info.mediaList, info.content.orEmpty())
         return PostDetailData(
             post = Post(
                 id = info.postId.toString(),
@@ -755,7 +757,7 @@ class PostDetailViewModel(
                 avatar = author.authorAvatar,
                 time = info.publishTime ?: "",
                 content = info.content ?: "",
-                images = info.mediaList.orEmpty().filter { it.isNotBlank() },
+                images = mediaUrls,
                 tagName = topicSection,
                 likeCount = info.likeCount,
                 commentCount = info.replyCount,
@@ -764,7 +766,7 @@ class PostDetailViewModel(
                 userId = author.authorId,
                 title = info.title,
                 summary = info.content,
-                totalMediaCount = info.totalMediaCount ?: info.mediaList.orEmpty().size,
+                totalMediaCount = info.totalMediaCount ?: mediaUrls.size,
                 module = topicSection,
                 collectCount = info.collectCount,
                 publishTime = info.publishTime
@@ -783,6 +785,18 @@ class PostDetailViewModel(
             commentCount = info.replyCount,
             isLiked = info.isLiked
         )
+    }
+
+    private fun mergeMediaUrls(mediaList: List<String>?, content: String): List<String> {
+        val out = mutableListOf<String>()
+        val seen = mutableSetOf<String>()
+        fun add(url: String) {
+            val normalized = url.trim()
+            if (normalized.isNotEmpty() && seen.add(normalized)) out.add(normalized)
+        }
+        mediaList.orEmpty().forEach(::add)
+        extractMediaUrlsFromContent(content).forEach(::add)
+        return out
     }
 
     private companion object {

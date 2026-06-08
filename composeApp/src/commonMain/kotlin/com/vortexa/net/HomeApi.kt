@@ -14,6 +14,7 @@ import com.vortexa.model.RecommendPostResponse
 import com.vortexa.model.RecommendTeacherResponse
 import com.vortexa.model.SearchSuggestResponse
 import com.vortexa.model.TeacherItem
+import com.vortexa.util.parseMediaUrlList
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -218,8 +219,7 @@ private fun JsonObject.boolean(key: String): Boolean? =
     (this[key] as? JsonPrimitive)?.booleanOrNull
 
 private fun JsonObject.stringList(key: String): List<String>? {
-    val array = this[key] as? JsonArray ?: return null
-    return array.mapNotNull { (it as? JsonPrimitive)?.content }
+    return parseMediaUrlList(this[key])
 }
 
 private fun JsonObject.toRecommendPostResponse(defaultPageNum: Int, defaultPageSize: Int): RecommendPostResponse =

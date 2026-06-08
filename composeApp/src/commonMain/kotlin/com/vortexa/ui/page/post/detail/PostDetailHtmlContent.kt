@@ -19,6 +19,7 @@ import com.mohamedrejeb.richeditor.ui.material3.RichText
 import com.vortexa.ui.component.ClickableLinkText
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontRegular
+import com.vortexa.util.resolveApiMediaUrl
 
 /**
  * 使用 Compose Rich Editor 渲染接口返回的 HTML 片段。
@@ -64,7 +65,8 @@ fun PostDetailHtmlContent(
 private object PostHtmlCoilImageLoader : ImageLoader {
     @Composable
     override fun load(model: Any): ImageData? {
-        val painter = rememberAsyncImagePainter(model = model)
+        val imageModel = (model as? String)?.let(::resolveApiMediaUrl) ?: model
+        val painter = rememberAsyncImagePainter(model = imageModel)
         var imageData by remember { mutableStateOf<ImageData?>(null) }
 
         LaunchedEffect(painter.state) {
