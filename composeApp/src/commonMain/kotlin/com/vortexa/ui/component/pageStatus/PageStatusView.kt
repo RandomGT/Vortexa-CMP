@@ -9,7 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material3.CircularProgressIndicator
+import com.vortexa.ui.component.AppLoadingIndicator
+import com.vortexa.ui.component.LoadingIndicatorSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -85,8 +86,7 @@ fun PageStatusView(
 }
 
 /**
- * Loading 状态内容，使用 CircularProgressIndicator 实现动态旋转效果
- * 采用 Compose 内置 indeterminate 模式，自带流畅动画
+ * Loading 状态内容，使用 iOS 原生 UIActivityIndicatorView 菊花样式
  */
 @Composable
 private fun LoadingContent(modifier: Modifier = Modifier) {
@@ -97,10 +97,9 @@ private fun LoadingContent(modifier: Modifier = Modifier) {
             .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(
+        AppLoadingIndicator(
             color = MaterialTheme.colorScheme.primary,
-            strokeWidth = 3.dp,
-            modifier = Modifier.size(48.dp)
+            size = LoadingIndicatorSize.Large,
         )
     }
 }

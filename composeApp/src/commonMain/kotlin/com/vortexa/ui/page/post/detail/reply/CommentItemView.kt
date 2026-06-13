@@ -12,7 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import com.vortexa.ui.component.AppLoadingIndicator
+import com.vortexa.ui.component.LoadingIndicatorSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -85,10 +86,10 @@ fun CommentItemView(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (comment.repliesLoadingMore) {
-                            CircularProgressIndicator(
+                            AppLoadingIndicator(
                                 modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = Colors.blue_3266FF
+                                color = Colors.blue_3266FF,
+                                size = LoadingIndicatorSize.Small,
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }

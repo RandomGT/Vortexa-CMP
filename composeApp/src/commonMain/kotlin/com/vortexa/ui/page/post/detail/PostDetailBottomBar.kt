@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -49,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -62,7 +64,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.vortexa.platform.isLocalMediaUri
+import com.vortexa.platform.platformLoadPreviewBitmap
 import com.vortexa.ui.component.LoadingButton
+import com.vortexa.util.resolveApiMediaUrl
 import com.vortexa.ui.theme.Colors
 import com.vortexa.ui.theme.FontMedium
 import com.vortexa.util.extension.click
@@ -77,6 +82,7 @@ private const val TAG = "PostDetailBottomBar"
 private val DEFAULT_EMOJI_PANEL_HEIGHT = 280.dp
 private val MEDIA_PREVIEW_ITEM_SIZE = 72.dp
 private val MEDIA_PREVIEW_CORNER_RADIUS = 8.dp
+private val POST_CREATE_BAR_HEIGHT_WITH_MEDIA = 132.dp
 
 @Composable
 fun PostDetailBottomBar(
@@ -179,6 +185,12 @@ fun PostDetailBottomBar(
             }
         }
     }
+    LaunchedEffect(mediaPreviews.size, composerState, showReplyComposer) {
+        Log.i(
+            TAG,
+            "media preview state: count=${mediaPreviews.size}, composerState=$composerState, showReplyComposer=$showReplyComposer"
+        )
+    }
 
     Column(
         modifier
@@ -193,6 +205,9 @@ fun PostDetailBottomBar(
             )
             .then(
                 when {
+                    !showReplyComposer && mediaPreviews.isNotEmpty() -> {
+                        Modifier.heightIn(min = POST_CREATE_BAR_HEIGHT_WITH_MEDIA)
+                    }
                     !showReplyComposer -> Modifier.heightIn(min = 60.dp)
                     isComposerExpanded -> Modifier.heightIn(min = 102.dp)
                     else -> Modifier.height(48.dp)
@@ -216,6 +231,7 @@ fun PostDetailBottomBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(MEDIA_PREVIEW_ITEM_SIZE)
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -409,8 +425,18 @@ private fun MediaPreviewItem(
     context: Context,
     onRemove: () -> Unit,
 ) {
+    val density = LocalDensity.current
+    val thumbPx = with(density) { MEDIA_PREVIEW_ITEM_SIZE.roundToPx().coerceAtLeast(1) }
     val previewShape = RoundedCornerShape(MEDIA_PREVIEW_CORNER_RADIUS)
     val placeholder = painterResource(Res.drawable.default_pic)
+    val resolvedModel = resolveApiMediaUrl(uri.toString()) ?: uri.toString()
+    val localBitmap: ImageBitmap? = if (isLocalMediaUri(resolvedModel)) {
+        produceState<ImageBitmap?>(initialValue = null, resolvedModel, thumbPx) {
+            value = platformLoadPreviewBitmap(resolvedModel, thumbPx)
+        }.value
+    } else {
+        null
+    }
     Box(modifier = Modifier.size(MEDIA_PREVIEW_ITEM_SIZE)) {
         Box(
             modifier = Modifier
@@ -419,15 +445,30 @@ private fun MediaPreviewItem(
                 .background(Colors.gray_F3F5F7),
             contentAlignment = Alignment.Center,
         ) {
-            AsyncImage(
-                model = uri.toString(),
-                contentDescription = null,
-                modifier = Modifier.matchParentSize(),
-                contentScale = ContentScale.Crop,
-                placeholder = placeholder,
-                error = placeholder,
-                fallback = placeholder,
-            )
+            when {
+                isLocalMediaUri(resolvedModel) && localBitmap != null -> {
+                    Image(
+                        bitmap = localBitmap,
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+                isLocalMediaUri(resolvedModel) -> {
+                    Text(text = "…", color = Colors.gray_B1B8C6, fontSize = 12.sp)
+                }
+                else -> {
+                    AsyncImage(
+                        model = resolvedModel,
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize(),
+                        contentScale = ContentScale.Crop,
+                        placeholder = placeholder,
+                        error = placeholder,
+                        fallback = placeholder,
+                    )
+                }
+            }
             if (isVideo) {
                 Box(
                     modifier = Modifier

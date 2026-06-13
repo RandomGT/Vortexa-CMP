@@ -26,7 +26,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
+import com.vortexa.ui.component.AppLoadingIndicator
+import com.vortexa.ui.component.LoadingIndicatorSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -398,7 +399,7 @@ fun PostCreateView(
                                 selectedMediaList = selectedMediaList,
                                 context = context
                             )
-                            composerState = ComposerState.Keyboard
+                            composerState = ComposerState.Media
                         }
                     },
                     onPickVideoClick = {
@@ -407,7 +408,7 @@ fun PostCreateView(
                             val picked = MediaPicker.pickVideo()
                             if (picked == null) {
                                 ToastUtil.show(context, "暂不支持上传本地视频")
-                                composerState = ComposerState.Keyboard
+                                composerState = ComposerState.Media
                                 return@launch
                             }
                             appendSelectedMedia(
@@ -416,7 +417,7 @@ fun PostCreateView(
                                 selectedMediaList = selectedMediaList,
                                 context = context
                             )
-                            composerState = ComposerState.Keyboard
+                            composerState = ComposerState.Media
                         }
                     },
                     onClearPreviewClick = {},
@@ -446,10 +447,10 @@ fun PostCreateView(
                     ) { },
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(
+                AppLoadingIndicator(
                     modifier = Modifier.size(48.dp),
                     color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 3.dp
+                    size = LoadingIndicatorSize.Large,
                 )
             }
         }
@@ -479,6 +480,10 @@ private fun appendPickedMedia(
             context = context
         )
     }
+    Log.i(
+        TAG,
+        "Images appended: picked=${picked.size}, total=${selectedMediaList.size}"
+    )
 }
 
 /**
@@ -512,7 +517,7 @@ private fun appendSelectedMedia(
         }
     }
     selectedMediaList.add(PostCreateSelectedMedia(uri = uri, type = mediaType, isRemote = false))
-    Log.d(TAG, "Media selected: uri=$uri, type=$mediaType")
+    Log.d(TAG, "Media selected: uri=$uri, type=$mediaType, total=${selectedMediaList.size}")
 }
 
 private const val TAG = "PostCreateView"

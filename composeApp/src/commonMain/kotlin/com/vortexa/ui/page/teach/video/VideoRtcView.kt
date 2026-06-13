@@ -24,7 +24,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
+import com.vortexa.ui.component.AppLoadingIndicator
+import com.vortexa.ui.component.LoadingIndicatorSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -177,7 +178,10 @@ fun VideoRtcView(
                 contentAlignment = Alignment.Center,
             ) {
                 when {
-                    tokenLoading -> CircularProgressIndicator(color = Color.White)
+                    tokenLoading -> AppLoadingIndicator(
+                        color = Color.White,
+                        size = LoadingIndicatorSize.Large,
+                    )
                     tokenError != null -> VideoRtcErrorContent(message = tokenError.orEmpty())
                     token.isNotBlank() -> RtcVideoSurface(
                         controller = controller,

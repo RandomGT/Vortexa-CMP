@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,7 +27,7 @@ import com.vortexa.ui.theme.FontRegular
  * @param isLoading 是否处于加载中（由外部控制，请求结束后置为 false）
  * @param onClick 点击回调，Loading 时不会触发
  * @param textColor 默认文案颜色（仅在不传 [content] 时用于 [text]）
- * @param loadingIndicatorColor Loading 时 [CircularProgressIndicator] 颜色
+ * @param loadingIndicatorColor Loading 时菊花指示器颜色
  * @param content 自定义内部内容；不传则使用默认 [text] 文案。Loading 时由组件统一展示转圈，不渲染 content
  */
 @Composable
@@ -53,10 +52,10 @@ fun LoadingButton(
         contentAlignment = Alignment.Center
     ) {
         if (isLoading) {
-            CircularProgressIndicator(
+            AppLoadingIndicator(
                 modifier = Modifier.size(24.dp),
                 color = loadingIndicatorColor,
-                strokeWidth = 2.dp
+                size = LoadingIndicatorSize.Medium,
             )
         } else {
             if (content != null) {

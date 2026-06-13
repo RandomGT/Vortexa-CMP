@@ -28,7 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material3.CircularProgressIndicator
+import com.vortexa.ui.component.AppLoadingIndicator
+import com.vortexa.ui.component.LoadingIndicatorSize
 import androidx.compose.ui.unit.dp
 import com.vortexa.ui.viewmodel.vortexaViewModel
 import kotlinx.coroutines.launch
@@ -281,9 +282,9 @@ private fun InteractionPageContent(
                             .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircularProgressIndicator(
+                        AppLoadingIndicator(
                             modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
+                            size = LoadingIndicatorSize.Medium,
                         )
                     }
                 }

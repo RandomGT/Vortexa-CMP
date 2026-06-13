@@ -11,7 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import com.vortexa.ui.component.AppLoadingIndicator
+import com.vortexa.ui.component.LoadingIndicatorSize
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -159,9 +160,9 @@ fun LazyListScope.dataCenterPostListSection(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    CircularProgressIndicator(
+                    AppLoadingIndicator(
                         modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
+                        size = LoadingIndicatorSize.Medium,
                     )
                 }
             }

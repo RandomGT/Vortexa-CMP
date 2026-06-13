@@ -2,5 +2,6 @@ platform :ios, '15.0'
 
 target 'iosApp' do
   use_frameworks!
-  pod 'AgoraRtcEngine_iOS', '~> 4.6'
+  # 仅引入基础 RTC 能力，避免完整包拉入 AIAEC 等扩展导致链接失败
+  pod 'AgoraRtcEngine_iOS/RtcBasic', '~> 4.6'
 end
